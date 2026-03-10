@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Bot Hallinta</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <a href="/dashboard" class="brand">Bot Dashboard</a>
+        <nav class="nav">
+            <span class="user-badge">{{ user.username }}</span>
+            <a href="/logout" class="btn btn-ghost">Kirjaudu ulos</a>
+        </nav>
+    </header>
+    <main class="main">
+        <section class="section">
+            <h1>Valitse palvelin</h1>
+            <p class="muted">Valitse palvelin, jonka asetuksia haluat hallita. Vain palvelimet, joilla sinulla on ylläpito-oikeudet, näkyvät täällä.</p>
+            <div class="guild-grid">
+                {% for g in guilds %}
+                <a href="{{ url_for('guild_settings', guild_id=g.id) }}" class="guild-card">
+                    <div class="guild-icon">
+                        {% if g.icon %}
+                        <img src="https://cdn.discordapp.com/icons/{{ g.id }}/{{ g.icon }}.png" alt="">
+                        {% else %}
+                        <span>{{ g.name[0] }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="guild-info">
+                        <strong>{{ g.name }}</strong>
+                        <span class="muted">Hallitse &rarr;</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% if not guilds %}
+            <p class="empty">Ei palvelimia. Sinulla pitää olla ylläpito-oikeudet vähintään yhdellä palvelimella.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ guild.name }} - Asetukset</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <a href="/dashboard" class="brand">Bot Dashboard</a>
+        <nav class="nav">
+            <span class="user-badge">{{ user.username }}</span>
+            <a href="/logout" class="btn btn-ghost">Kirjaudu ulos</a>
+        </nav>
+    </header>
+    <main class="main">
+        <section class="section">
+            <a href="/dashboard" class="back-link">&larr; Takaisin palvelimiin</a>
+            <div class="guild-header">
+                <div class="guild-icon large">
+                    {% if guild.icon %}
+                    <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" alt="">
+                    {% else %}
+                    <span>{{ guild.name[0] }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <h1>{{ guild.name }}</h1>
+                    <p class="muted">Ominaisuuksien hallinta – muutokset astuvat voimaan heti</p>
+                </div>
+            </div>
+            <div class="features-list">
+                {% for f in features %}
+                <div class="feature-row" data-feature="{{ f.key }}">
+                    <div class="feature-info">
+                        <strong>{{ f.label }}</strong>
+                        <span class="feature-desc">{{ f.description }}</span>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" {% if f.enabled %}checked{% endif %} data-feature="{{ f.key }}">
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h2 class="subsection-title">Moderaatio</h2>
+            <p class="muted subsection-desc">Ylläpitäjillä on aina oikeus. Lisäksi voit valita moderaattoriroolit ja kytkeä yksittäiset toiminnot päälle/pois.</p>
+
+            <div class="panel">
+                <h3 class="panel-title">Moderaattoriroolit</h3>
+                {% if roles %}
+                <div class="role-grid" id="role-grid">
+                    {% for role in roles %}
+                    <label class="role-check">
+                        <input type="checkbox" value="{{ role.id }}" {% if (role.id|string) in mod_roles %}checked{% endif %}>
+                        <span>{{ role.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty">Roolit eivät ole saatavilla. Varmista, että botti on palvelimella.</p>
+                {% endif %}
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Moderaatiotoiminnot</h3>
+                <div class="features-list">
+                    {% for f in mod_features %}
+                    <div class="feature-row">
+                        <div class="feature-info">
+                            <strong>{{ f.label }}</strong>
+                            <span class="feature-desc">{{ f.description }}</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" {% if f.enabled %}checked{% endif %} data-mod-feature="{{ f.key }}">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <h2 class="subsection-title">Moderaatio-lokit</h2>
+            <p class="feature-desc subsection-desc">Valitse kanava ja mitkä logit ovat käytössä. Tämä koskee kaikkia tämän Discord-palvelimen logeja.</p>
+            <div class="panel">
+                <h3 class="panel-title">Logikanava</h3>
+                <select id="log-channel" class="channel-select">
+                    <option value="">– Ei kanavaa –</option>
+                    {% for ch in channels %}
+                    <option value="{{ ch.id }}" {% if log_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if not channels %}
+                <p class="empty">Botti ei ole palvelimella tai kanavia ei löydy. Lisää botti palvelimelle ensin.</p>
+                {% endif %}
+            </div>
+
+            <h2 class="subsection-title">Tikettijärjestelmä</h2>
+            <p class="muted subsection-desc">Valitse rooli joka näkee tiketit, kategoria sekä kanava josta tiketit avataan.</p>
+            <div class="panel">
+                <h3 class="panel-title">Tiketti-asetukset</h3>
+                <div class="ticket-settings">
+                    <div class="ticket-row">
+                        <label>Rooli joka näkee tiketit (staff)</label>
+                        <select id="ticket-staff-role" class="channel-select">
+                            <option value="">– Ei roolia –</option>
+                            {% for r in roles %}
+                            <option value="{{ r.id }}" {% if ticket_staff_role == (r.id|string) %}selected{% endif %}>{{ r.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Kategoria tiketille</label>
+                        <select id="ticket-category" class="channel-select">
+                            <option value="">– Ei kategoriaa –</option>
+                            {% for c in categories %}
+                            <option value="{{ c.id }}" {% if ticket_category == (c.id|string) %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Kanava josta tiketti avataan (tiketti-nappi)</label>
+                        <select id="ticket-channel" class="channel-select">
+                            <option value="">– Ei kanavaa –</option>
+                            {% for ch in channels %}
+                            <option value="{{ ch.id }}" {% if ticket_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Logityypit</h3>
+                <div class="features-list">
+                    {% for f in log_features %}
+                    <div class="feature-row">
+                        <div class="feature-info">
+                            <strong>{{ f.label }}</strong>
+                            <span class="feature-desc">{{ f.description }}</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" {% if f.enabled %}checked{% endif %} data-log-feature="{{ f.key }}">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        const guildId = '{{ guild.id }}';
+
+        document.querySelectorAll('.toggle input').forEach(input => {
+            input.addEventListener('change', async function() {
+                const feature = this.dataset.feature;
+                if (!feature) return;
+                const enabled = this.checked;
+                const res = await fetch(`/api/guild/${guildId}/feature/${feature}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                if (!res.ok) {
+                    this.checked = !enabled;
+                    alert('Tallennus epäonnistui');
+                }
+            });
+        });
+
+        const logSelect = document.getElementById('log-channel');
+        if (logSelect) {
+            logSelect.addEventListener('change', async function() {
+                const channelId = this.value || null;
+                const res = await fetch(`/api/guild/${guildId}/mod/log-channel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel_id: channelId })
+                });
+                if (!res.ok) alert('Lokikanavan tallennus epäonnistui');
+            });
+        }
+
+        // Mod-toiminnot
+        document.querySelectorAll('[data-mod-feature]').forEach(input => {
+            input.addEventListener('change', async function() {
+                const key = this.dataset.modFeature;
+                const enabled = this.checked;
+                const res = await fetch(`/api/guild/${guildId}/mod/feature/${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                if (!res.ok) {
+                    this.checked = !enabled;
+                    alert('Tallennus epäonnistui');
+                }
+            });
+        });
+
+        // Logityypit
+        document.querySelectorAll('[data-log-feature]').forEach(input => {
+            input.addEventListener('change', async function() {
+                const key = this.dataset.logFeature;
+                const enabled = this.checked;
+                const res = await fetch(`/api/guild/${guildId}/logs/feature/${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                if (!res.ok) {
+                    this.checked = !enabled;
+                    alert('Tallennus epäonnistui');
+                }
+            });
+        });
+
+        // Tiketti-asetukset
+        function saveTicketSettings() {
+            const staff = document.getElementById('ticket-staff-role')?.value || '';
+            const category = document.getElementById('ticket-category')?.value || '';
+            const channel = document.getElementById('ticket-channel')?.value || '';
+            fetch(`/api/guild/${guildId}/ticket/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    staff_role_id: staff,
+                    category_id: category,
+                    channel_id: channel
+                })
+            }).then(r => { if (!r.ok) alert('Tiketti-asetusten tallennus epäonnistui'); });
+        }
+        document.getElementById('ticket-staff-role')?.addEventListener('change', saveTicketSettings);
+        document.getElementById('ticket-category')?.addEventListener('change', saveTicketSettings);
+        document.getElementById('ticket-channel')?.addEventListener('change', saveTicketSettings);
+
+        // Mod-roolit
+        const roleGrid = document.getElementById('role-grid');
+        if (roleGrid) {
+            roleGrid.addEventListener('change', async function(e) {
+                if (e.target.type !== 'checkbox') return;
+                const checked = Array.from(roleGrid.querySelectorAll('input:checked')).map(i => i.value);
+                const res = await fetch(`/api/guild/${guildId}/mod/roles`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role_ids: checked })
+                });
+                if (!res.ok) alert('Roolien tallennus epäonnistui');
+            });
+        }
+    </script>
+</body>
+</html>

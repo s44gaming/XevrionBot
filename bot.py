@@ -1,0 +1,76 @@
+import os
+import discord
+from discord.ext import commands
+import database
+
+
+async def _load_extensions(bot, folder: str):
+    """Lataa kaikki extensionit annetusta kansiosta."""
+    path = os.path.join(os.path.dirname(__file__), folder)
+    for name in sorted(os.listdir(path)):
+        if name.endswith(".py") and not name.startswith("_"):
+            module_name = name[:-3]
+            ext = f"{folder}.{module_name}"
+            try:
+                await bot.load_extension(ext)
+                print(f"  Ladattu: {ext}")
+            except Exception as e:
+                print(f"  Virhe ladattaessa {ext}: {e}")
+
+
+class Bot(commands.Bot):
+    def __init__(self):
+        intents = discord.Intents.default()
+        intents.guilds = True
+        intents.members = True
+        intents.message_content = True
+        super().__init__(
+            command_prefix="!",
+            intents=intents,
+            description="Monipalvelin Discord -botti hallittavalla web-käyttöliittymällä"
+        )
+        self._db = database
+
+    def get_tree(self):
+        return self.tree
+
+    async def is_feature_enabled(self, guild_id: int, feature: str) -> bool:
+        return self._db.is_feature_enabled(str(guild_id), feature)
+
+    def get_log_channel(self, guild_id: int) -> int | None:
+        """Palauttaa palvelimen logikanavan ID:n tai None."""
+        ch = self._db.get_log_channel(str(guild_id))
+        return int(ch) if ch else None
+
+    def is_log_enabled(self, guild_id: int, log_key: str) -> bool:
+        return self._db.is_log_enabled(str(guild_id), log_key)
+
+    def get_mod_roles(self, guild_id: int) -> list[str]:
+        return self._db.get_mod_roles(str(guild_id))
+
+    def has_mod_permission(self, member: discord.Member) -> bool:
+        """Ylläpitäjä tai webissä määritelty mod-rooli."""
+        if member.guild_permissions.administrator:
+            return True
+        try:
+            mod_role_ids = {int(rid) for rid in self.get_mod_roles(member.guild.id)}
+        except Exception:
+            mod_role_ids = set()
+        return any(r.id in mod_role_ids for r in member.roles)
+
+    def is_mod_action_enabled(self, guild_id: int, action: str) -> bool:
+        return self._db.is_mod_action_enabled(str(guild_id), action)
+
+    def get_ticket_settings(self, guild_id: int) -> dict:
+        return self._db.get_ticket_settings(str(guild_id))
+
+    async def setup_hook(self):
+        print("Ladataan extentioita...")
+        await _load_extensions(self, "commands")
+        await _load_extensions(self, "events")
+        await self.tree.sync()
+        print("Slash-komennot synkronoitu")
+
+
+def create_bot():
+    return Bot()
