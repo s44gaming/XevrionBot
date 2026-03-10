@@ -211,6 +211,20 @@ def index():
     return render_template("index.html", base_url=BASE_URL)
 
 
+@app.route("/invite")
+def invite():
+    """Ohjaa Discord OAuth2 -kutsulinkille, jotta botti voidaan kutsua palvelimelle."""
+    if not CLIENT_ID:
+        return "Kutsulinkkiä ei ole konfiguroitu (DISCORD_CLIENT_ID puuttuu).", 503
+    url = (
+        f"https://discord.com/api/oauth2/authorize"
+        f"?client_id={CLIENT_ID}"
+        f"&permissions=8"
+        f"&scope=bot%20applications.commands"
+    )
+    return redirect(url)
+
+
 @app.route("/login")
 def login():
     state = secrets.token_urlsafe(32)
