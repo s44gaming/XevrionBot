@@ -2,6 +2,8 @@ import os
 import sys
 import secrets
 import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from flask import Flask, redirect, url_for, session, request, jsonify, render_template
 from functools import wraps
@@ -10,6 +12,9 @@ from config import DEV_USER_IDS, BOT_INFO_EDIT_PASSWORD
 
 _REQ_TIMEOUT = 30
 _REQ_HEADERS = {"User-Agent": "DiscordBot (Web Dashboard)"}
+_CACHE_TTL = 90  # sekuntia Discord API -vastauksille
+_discord_cache = {}
+_cache_lock = threading.Lock()
 
 app = Flask(__name__, template_folder="web/templates", static_folder="web/static")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
@@ -132,8 +137,21 @@ def get_bot_invite_url(guild_id: str) -> str:
     return f"{base}?{params}"
 
 
-def get_guild_channels(guild_id: str) -> list:
-    """Hakee palvelimen tekstikanavat bot-tokenilla. Bottin pitää olla palvelimella."""
+def _get_cached(key: str, fetcher):
+    """Palauttaa välimuistista tai hakee ja tallentaa."""
+    now = time.monotonic()
+    with _cache_lock:
+        entry = _discord_cache.get(key)
+        if entry and (now - entry["ts"]) < _CACHE_TTL:
+            return entry["data"]
+    data = fetcher()
+    with _cache_lock:
+        _discord_cache[key] = {"data": data, "ts": now}
+    return data
+
+
+def _fetch_guild_channels_raw(guild_id: str) -> list:
+    """Yksi API-kutsu kaikille kanaville."""
     if not BOT_TOKEN:
         return []
     r = requests.get(
@@ -143,41 +161,30 @@ def get_guild_channels(guild_id: str) -> list:
     )
     if r.status_code != 200:
         return []
-    channels = [c for c in r.json() if c.get("type") == 0]
+    return r.json()
+
+
+def get_guild_channels(guild_id: str) -> list:
+    """Hakee palvelimen tekstikanavat (type 0). Yksi API-kutsu kanaville."""
+    all_ch = _get_cached(f"channels:{guild_id}", lambda: _fetch_guild_channels_raw(guild_id))
+    channels = [c for c in all_ch if c.get("type") == 0]
     return sorted(channels, key=lambda x: (x.get("position", 0), x["name"]))
 
 
 def get_guild_voice_channels(guild_id: str) -> list:
-    """Hakee palvelimen ääni-/stagekanavat (type 2)."""
-    if not BOT_TOKEN:
-        return []
-    r = requests.get(
-        f"{DISCORD_API}/guilds/{guild_id}/channels",
-        headers={"Authorization": f"Bot {BOT_TOKEN}", **_REQ_HEADERS},
-        timeout=_REQ_TIMEOUT
-    )
-    if r.status_code != 200:
-        return []
-    channels = [c for c in r.json() if c.get("type") == 2]
+    """Hakee palvelimen ääni-/stagekanavat (type 2). Käyttää samaa välimuistia."""
+    all_ch = _get_cached(f"channels:{guild_id}", lambda: _fetch_guild_channels_raw(guild_id))
+    channels = [c for c in all_ch if c.get("type") == 2]
     return sorted(channels, key=lambda x: (x.get("position", 0), x["name"]))
 
 
 def get_guild_categories(guild_id: str) -> list:
-    """Hakee palvelimen kategoriat (type 4)."""
-    if not BOT_TOKEN:
-        return []
-    r = requests.get(
-        f"{DISCORD_API}/guilds/{guild_id}/channels",
-        headers={"Authorization": f"Bot {BOT_TOKEN}", **_REQ_HEADERS},
-        timeout=_REQ_TIMEOUT
-    )
-    if r.status_code != 200:
-        return []
-    cats = [c for c in r.json() if c.get("type") == 4]
+    """Hakee palvelimen kategoriat (type 4). Käyttää samaa välimuistia."""
+    all_ch = _get_cached(f"channels:{guild_id}", lambda: _fetch_guild_channels_raw(guild_id))
+    cats = [c for c in all_ch if c.get("type") == 4]
     return sorted(cats, key=lambda x: (x.get("position", 0), x["name"]))
 
-def get_guild_roles(guild_id: str) -> list:
-    """Hakee roolit bot-tokenilla. Bottin pitää olla palvelimella."""
+def _fetch_guild_roles_raw(guild_id: str) -> list:
     if not BOT_TOKEN:
         return []
     r = requests.get(
@@ -188,8 +195,12 @@ def get_guild_roles(guild_id: str) -> list:
     if r.status_code != 200:
         return []
     roles = r.json().get("roles", [])
-    # poista managed-roolit (bot roolit)
-    roles = [ro for ro in roles if not ro.get("managed")]
+    return [ro for ro in roles if not ro.get("managed")]
+
+
+def get_guild_roles(guild_id: str) -> list:
+    """Hakee roolit bot-tokenilla. Välimuistissa 90 s."""
+    roles = _get_cached(f"roles:{guild_id}", lambda: _fetch_guild_roles_raw(guild_id))
     return sorted(roles, key=lambda x: x.get("position", 0), reverse=True)
 
 
@@ -268,12 +279,19 @@ def dashboard():
             is_dev=is_dev,
             error="Discord API ei vastannut ajoissa. Tarkista verkkoyhteys ja yritä uudelleen."
         ), 503
-    for g in guilds:
+    def _check_guild(g):
         try:
-            g["bot_in"] = bot_in_guild(g["id"])
+            return g["id"], bot_in_guild(g["id"]), None
         except requests.RequestException:
-            g["bot_in"] = False
-        g["invite_url"] = get_bot_invite_url(g["id"]) if not g["bot_in"] else None
+            return g["id"], False, None
+
+    with ThreadPoolExecutor(max_workers=min(10, len(guilds) or 1)) as ex:
+        futures = {ex.submit(_check_guild, g): g for g in guilds}
+        for future in as_completed(futures):
+            gid, bot_in, _ = future.result()
+            g = next(x for x in guilds if x["id"] == gid)
+            g["bot_in"] = bot_in
+            g["invite_url"] = get_bot_invite_url(gid) if not bot_in else None
     user_id = str(session.get("user", {}).get("id", ""))
     is_dev = bool(DEV_USER_IDS and user_id in DEV_USER_IDS)
     return render_template("dashboard.html", guilds=guilds, user=session["user"], is_dev=is_dev)
@@ -791,6 +809,15 @@ def api_set_ticket_settings(guild_id):
     channel = data.get("channel_id") or ""
     database.set_ticket_settings(guild_id, staff_role_id=staff_role, category_id=category, channel_id=channel)
     return jsonify({"success": True})
+
+
+@app.after_request
+def add_cache_headers(response):
+    """Staattisten tiedostojen välimuisti selaimessa – nopeampi uudelleenlataus."""
+    if request.path.startswith("/static/"):
+        response.cache_control.max_age = 86400
+        response.cache_control.public = True
+    return response
 
 
 def create_app():

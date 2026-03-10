@@ -23,7 +23,7 @@
             <div class="guild-header">
                 <div class="guild-icon large">
                     {% if guild.icon %}
-                    <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" alt="">
+                    <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" alt="" fetchpriority="high" decoding="async">
                     {% else %}
                     <span>{{ guild.name[0] }}</span>
                     {% endif %}

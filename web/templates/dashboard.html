@@ -33,7 +33,7 @@
                 <div class="guild-card {% if not g.bot_in %}guild-card--no-bot{% endif %}">
                     <div class="guild-icon">
                         {% if g.icon %}
-                        <img src="https://cdn.discordapp.com/icons/{{ g.id }}/{{ g.icon }}.png" alt="">
+                        <img src="https://cdn.discordapp.com/icons/{{ g.id }}/{{ g.icon }}.png" alt="" loading="lazy" decoding="async">
                         {% else %}
                         <span>{{ g.name[0] }}</span>
                         {% endif %}
