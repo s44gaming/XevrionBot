@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Bot Hallinta</title>
+    <title>Xevrion – Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,8 +11,11 @@
 </head>
 <body>
     <header class="header">
-        <a href="/dashboard" class="brand">Bot Dashboard</a>
+        <a href="/dashboard" class="brand">Xevrion</a>
         <nav class="nav">
+            {% if is_dev %}
+            <a href="/dev" class="btn btn-ghost">Kehittäjäportaali</a>
+            {% endif %}
             <span class="user-badge">{{ user.username }}</span>
             <a href="/logout" class="btn btn-ghost">Kirjaudu ulos</a>
         </nav>
@@ -42,6 +45,8 @@
             <p class="empty">Ei palvelimia. Sinulla pitää olla ylläpito-oikeudet vähintään yhdellä palvelimella.</p>
             {% endif %}
         </section>
+        <footer class="site-footer">© <span id="year"></span> S44Gaming. Kaikki oikeudet pidätetään.</footer>
     </main>
+    <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>

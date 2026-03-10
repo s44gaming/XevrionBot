@@ -178,7 +178,7 @@ class ModeraatioCog(commands.Cog):
                 color=discord.Color.orange(),
             )
 
-    @app_commands.command(name="purge", description="Poistaa viestejä kanavalta")
+    @app_commands.command(name="clear", description="Poistaa viestejä kanavalta")
     @app_commands.describe(määrä="Poistettavien viestien määrä (1–100)", käyttäjä="Rajaa tietyn käyttäjän viesteihin (valinnainen)")
     async def purge(self, interaction: discord.Interaction, määrä: int, käyttäjä: discord.Member | None = None):
         if not await self._check_mod(interaction, "purge"):
@@ -195,7 +195,7 @@ class ModeraatioCog(commands.Cog):
                 self.bot,
                 interaction.guild,
                 "mod_actions",
-                "Moderaatio: Purge",
+                "Moderaatio: Clear",
                 f"**Moderaattori:** {interaction.user}\n**Kanava:** <#{interaction.channel.id}>\n**Poistettu:** {len(deleted)} viestiä",
                 color=discord.Color.orange(),
             )

@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands
 import database
+from config import BOT_DESCRIPTION, BOT_DEVELOPERS, BOT_INVITE_LINK
 
 
 async def _load_extensions(bot, folder: str):
@@ -24,6 +25,7 @@ class Bot(commands.Bot):
         intents.guilds = True
         intents.members = True
         intents.message_content = True
+        intents.voice_states = True
         super().__init__(
             command_prefix="!",
             intents=intents,
@@ -66,6 +68,32 @@ class Bot(commands.Bot):
 
     def get_welcome_settings(self, guild_id: int) -> dict:
         return self._db.get_welcome_settings(str(guild_id))
+
+    def get_level_settings(self, guild_id: int) -> dict:
+        return self._db.get_level_settings(str(guild_id))
+
+    def get_fivem_settings(self, guild_id: int) -> dict:
+        return self._db.get_fivem_settings(str(guild_id))
+
+    def _presence_text(self) -> str:
+        """Status-teksti: palvelimien määrä, kuvaus, kehittäjät, kutsu (max 128 merkkiä)."""
+        n = len(self.guilds)
+        palvelimet = f"{n} palvelimella" if n != 1 else "1 palvelimella"
+        devs = ", ".join(BOT_DEVELOPERS[:5]) if BOT_DEVELOPERS else ""
+        desc = (BOT_DESCRIPTION or "Tietoa: !info").strip()[:50]
+        parts = [palvelimet, desc]
+        if devs:
+            parts.append("Kehittäjät: " + devs[:40])
+        if BOT_INVITE_LINK:
+            parts.append("discord.gg/…")
+        text = " | ".join(parts)
+        return text[:128]
+
+    async def update_presence(self):
+        """Päivittää botin statuksen (näkyy kaikilla palvelimilla)."""
+        text = self._presence_text()
+        activity = discord.Activity(type=discord.ActivityType.watching, name=text)
+        await self.change_presence(activity=activity, status=discord.Status.online)
 
     async def setup_hook(self):
         print("Ladataan extentioita...")

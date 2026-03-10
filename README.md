@@ -8,7 +8,7 @@ Python-pohjainen Discord-botti, joka tukee useaa palvelinta ja web-käyttöliitt
 - **Web-dashboard** – hallitse kaikkia ominaisuuksia palvelin kerrallaan
 - **Ylläpitäjä-tarkistus** – vain palvelimen Administratorit näkevät hallinnan
 - **Peruskomentoja** – ping, info, tervehdys, hallinta
-- **Moderaatio** – kick, ban, mute, varoitukset, purge – roolit ja toiminnat hallitaan webistä
+- **Moderaatio** – kick, ban, mute, varoitukset, clear – roolit ja toiminnat hallitaan webistä
 - **Serverilogit** – mod-toiminnot, jäsenet liittyy/poistuu, viestien poisto/muokkaus – kanava ja tyypit webistä
 - **Tikettijärjestelmä** – staff-rooli, kategoria ja kanava määritellään webistä
 
@@ -123,7 +123,7 @@ Tämä käynnistää:
 | `/varoitus` | Anna varoitus jäsenelle |
 | `/varoitukset` | Näytä jäsenen varoitukset |
 | `/poista_varoitukset` | Poista kaikki varoitukset jäseneltä |
-| `/purge` | Poista viestejä kanavalta |
+| `/clear` | Poista viestejä kanavalta |
 
 *Mod-roolit määritellään webissä. Ylläpitäjillä on aina mod-oikeudet.*
 
@@ -166,7 +166,7 @@ DiscordBotti/
 │   ├── info.py
 │   ├── tervehdys.py
 │   ├── hallinta.py
-│   ├── moderaatio.py   # kick, ban, mute, varoitukset, purge
+│   ├── moderaatio.py   # kick, ban, mute, varoitukset, clear
 │   └── tiketti.py      # Tikettijärjestelmä
 ├── events/
 │   ├── on_ready.py

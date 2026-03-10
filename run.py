@@ -23,6 +23,9 @@ import database
 from config import DISCORD_TOKEN, WEB_PORT
 from bot import create_bot
 from web_app import app
+import shared_state
+
+shared_state.capture_console()
 
 
 def run_web():
@@ -32,17 +35,18 @@ def run_web():
 
 def run_bot():
     bot = create_bot()
+    shared_state.set_bot(bot)
     bot.run(DISCORD_TOKEN)
 
 
 def main():
     database.init_db()
 
-    web_thread = threading.Thread(target=run_web, daemon=True)
-    web_thread.start()
-    print(f"Web-dashboard käynnissä: http://localhost:{WEB_PORT}")
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
 
-    run_bot()
+    print(f"Web-dashboard käynnissä: http://localhost:{WEB_PORT}")
+    run_web()
 
 
 if __name__ == "__main__":

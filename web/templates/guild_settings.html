@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ guild.name }} - Asetukset</title>
+    <title>Xevrion – {{ guild.name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +11,7 @@
 </head>
 <body>
     <header class="header">
-        <a href="/dashboard" class="brand">Bot Dashboard</a>
+        <a href="/dashboard" class="brand">Xevrion</a>
         <nav class="nav">
             <span class="user-badge">{{ user.username }}</span>
             <a href="/logout" class="btn btn-ghost">Kirjaudu ulos</a>
@@ -33,7 +33,12 @@
                     <p class="muted">Ominaisuuksien hallinta – muutokset astuvat voimaan heti</p>
                 </div>
             </div>
-            <div class="features-list">
+
+            <h2 class="subsection-title">Komennot</h2>
+            <p class="muted subsection-desc">Valitse mitkä komennot ovat käytettävissä. Voit kytkeä jokaisen päälle tai pois.</p>
+            <div class="panel">
+                <h3 class="panel-title">Perus- ja tasokomennot</h3>
+                <div class="features-list">
                 {% for f in features %}
                 <div class="feature-row" data-feature="{{ f.key }}">
                     <div class="feature-info">
@@ -46,7 +51,9 @@
                     </label>
                 </div>
                 {% endfor %}
+                </div>
             </div>
+            <p class="muted subsection-desc" style="margin-top: 0.5rem;">Moderaatiokomennot (kick, ban, mute, clear jne.) ovat alla Moderaatio-osiossa.</p>
 
             <h2 class="subsection-title">Moderaatio</h2>
             <p class="muted subsection-desc">Ylläpitäjillä on aina oikeus. Lisäksi voit valita moderaattoriroolit ja kytkeä yksittäiset toiminnot päälle/pois.</p>
@@ -124,6 +131,109 @@
                 </div>
             </div>
 
+            <h2 class="subsection-title">Levellijärjestelmä</h2>
+            <p class="muted subsection-desc">XP viesteistä, tasoja ja taso-ilmoituksia. Voit muuttaa XP/viesti, cooldownin sekä määrittää tiettyihin tasoihin roolit. Bottin pitää pystyä antamaan rooleja (Manage Roles).</p>
+            <div class="panel">
+                <h3 class="panel-title">Taso-asetukset</h3>
+                <div class="ticket-settings">
+                    <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
+                        <label class="toggle">
+                            <input type="checkbox" id="level-enabled" {% if level_enabled %}checked{% endif %}>
+                            <span class="toggle-track"></span>
+                        </label>
+                        <label for="level-enabled" style="margin: 0;">Päällä</label>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Kanava taso-ilmoituksille (valinnainen)</label>
+                        <select id="level-channel" class="channel-select">
+                            <option value="">– Ei kanavaa (ei ilmoituksia) –</option>
+                            {% for ch in channels %}
+                            <option value="{{ ch.id }}" {% if level_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="ticket-row">
+                        <label>XP per viesti (1–100)</label>
+                        <input type="number" id="level-xp-per" min="1" max="100" value="{{ level_xp_per }}" class="channel-select" style="max-width: 100px;">
+                    </div>
+                    <div class="ticket-row">
+                        <label>Cooldown sekunteina (10–300)</label>
+                        <input type="number" id="level-cooldown" min="10" max="300" value="{{ level_cooldown }}" class="channel-select" style="max-width: 100px;">
+                    </div>
+                    <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
+                        <label class="toggle">
+                            <input type="checkbox" id="level-voice-xp" {% if level_voice_xp %}checked{% endif %}>
+                            <span class="toggle-track"></span>
+                        </label>
+                        <label for="level-voice-xp" style="margin: 0;">Ääni-XP (XP äänikanavalla)</label>
+                    </div>
+                    <div class="ticket-row" id="level-voice-xp-row">
+                        <label>XP per minuutti äänellä (1–100)</label>
+                        <input type="number" id="level-voice-xp-per" min="1" max="100" value="{{ level_voice_xp_per }}" class="channel-select" style="max-width: 100px;">
+                    </div>
+                    <div class="ticket-row">
+                        <label>Tekstikanavat ilman XP</label>
+                        <select id="text-no-xp" class="channel-select" multiple size="3">
+                            {% for ch in channels %}
+                            <option value="{{ ch.id }}" {% if (ch.id|string) in text_no_xp %}selected{% endif %}>{{ ch.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Pidä Ctrl (tai Cmd) pohjassa valitaksesi useita. Tyhjänä = kaikki kanavat antavat XP.</p>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Äänikanavat ilman XP</label>
+                        <select id="voice-no-xp" class="channel-select" multiple size="3">
+                            {% for ch in voice_channels %}
+                            <option value="{{ ch.id }}" {% if (ch.id|string) in voice_no_xp %}selected{% endif %}>{{ ch.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Pidä Ctrl (tai Cmd) pohjassa valitaksesi useita.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Taso-roolit</h3>
+                <p class="muted" style="margin-bottom: 0.75rem;">Määritä rooli tietylle tasolle – kun jäsen saavuttaa tason, hän saa roolin automaattisesti.</p>
+                <div id="level-roles-container" class="ticket-settings">
+                    {% for lvl, role_id in level_roles.items() %}
+                    <div class="ticket-row level-role-row" data-level="{{ lvl }}">
+                        <label>Taso {{ lvl }}</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select class="channel-select level-role-select" data-level="{{ lvl }}" style="flex: 1;">
+                                <option value="">– Ei roolia –</option>
+                                {% for r in roles %}
+                                <option value="{{ r.id }}" {% if role_id == (r.id|string) %}selected{% endif %}>{{ r.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn btn-ghost level-role-remove" data-level="{{ lvl }}" title="Poista">×</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="ticket-row" style="margin-top: 0.5rem;">
+                    <label>Lisää taso</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" id="level-add-num" min="1" max="100" placeholder="Taso" class="channel-select" style="max-width: 80px;">
+                        <select id="level-add-role" class="channel-select" style="flex: 1;">
+                            <option value="">– Valitse rooli –</option>
+                            {% for r in roles %}
+                            <option value="{{ r.id }}">{{ r.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" id="level-add-btn" class="btn btn-ghost">Lisää</button>
+                    </div>
+                </div>
+                <div class="ticket-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border, #333);">
+                    <label>Luo taso-roolit automaattisesti</label>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <input type="text" id="level-auto-levels" placeholder="5, 10, 15, 20" class="channel-select" style="max-width: 180px;">
+                        <button type="button" id="level-auto-btn" class="btn btn-ghost">Luo roolit</button>
+                    </div>
+                    <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Luo roolit "Taso 5", "Taso 10" jne. ja tallentaa ne automaattisesti.</p>
+                </div>
+            </div>
+
             <h2 class="subsection-title">Tikettijärjestelmä</h2>
             <p class="muted subsection-desc">Valitse rooli joka näkee tiketit, kategoria sekä kanava josta tiketit avataan.</p>
             <div class="panel">
@@ -157,6 +267,31 @@
                         </select>
                     </div>
                 </div>
+            </div>
+
+            <h2 class="subsection-title">FiveM-palvelin</h2>
+            <p class="muted subsection-desc">Aseta FiveM-palvelimen osoite ja portti. Komennolla /fivem näytetään palvelimen tila (pelaajamäärä jne.).</p>
+            <div class="panel">
+                <h3 class="panel-title">FiveM-asetukset</h3>
+                <div class="ticket-row">
+                    <label>Palvelimen osoite (IP tai domain)</label>
+                    <input type="text" id="fivem-host" placeholder="esim. play.example.com tai 123.45.67.89" value="{{ fivem_host }}" class="channel-select" style="max-width: 320px;">
+                </div>
+                <div class="ticket-row">
+                    <label>Portti (oletus 30120)</label>
+                    <input type="text" id="fivem-port" placeholder="30120" value="{{ fivem_port }}" class="channel-select" style="max-width: 120px;">
+                </div>
+                <div class="ticket-row">
+                    <label>Kanava johon status voidaan lähettää (valinnainen)</label>
+                    <select id="fivem-channel" class="channel-select" style="max-width: 280px;">
+                        <option value="">– Ei kanavaa –</option>
+                        {% for ch in channels %}
+                        <option value="{{ ch.id }}" {% if fivem_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Kun kanava on asetettu, /fivem-komennolla voi valita »Lähetä kanavalle» ja status lähetetään sinne.</p>
+                <button type="button" class="btn btn-primary" id="fivem-save">Tallenna</button>
             </div>
 
             <div class="panel">
@@ -263,6 +398,21 @@
         }
         document.getElementById('ticket-staff-role')?.addEventListener('change', saveTicketSettings);
 
+        // FiveM-asetukset
+        document.getElementById('fivem-save')?.addEventListener('click', function() {
+            const host = document.getElementById('fivem-host')?.value?.trim() || '';
+            const port = document.getElementById('fivem-port')?.value?.trim() || '30120';
+            const channelId = document.getElementById('fivem-channel')?.value || '';
+            fetch(`/api/guild/${guildId}/fivem/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ host, port, channel_id: channelId || null })
+            }).then(r => {
+                if (r.ok) alert('FiveM-asetukset tallennettu.');
+                else alert('Tallennus epäonnistui.');
+            });
+        });
+
         // Tervetuloa-asetukset
         function saveWelcomeSettings() {
             const enabled = document.getElementById('welcome-enabled')?.checked ?? false;
@@ -275,6 +425,113 @@
         }
         document.getElementById('welcome-enabled')?.addEventListener('change', saveWelcomeSettings);
         document.getElementById('welcome-channel')?.addEventListener('change', saveWelcomeSettings);
+
+        // Taso-asetukset
+        function saveLevelSettings() {
+            const enabled = document.getElementById('level-enabled')?.checked ?? false;
+            const channelId = document.getElementById('level-channel')?.value || '';
+            const xpPer = parseInt(document.getElementById('level-xp-per')?.value || '15', 10);
+            const cooldown = parseInt(document.getElementById('level-cooldown')?.value || '60', 10);
+            const voiceXp = document.getElementById('level-voice-xp')?.checked ?? false;
+            const voiceXpPer = parseInt(document.getElementById('level-voice-xp-per')?.value || '10', 10);
+            const textNoXp = Array.from(document.getElementById('text-no-xp')?.selectedOptions || []).map(o => o.value);
+            const voiceNoXp = Array.from(document.getElementById('voice-no-xp')?.selectedOptions || []).map(o => o.value);
+            fetch(`/api/guild/${guildId}/level/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    enabled,
+                    channel_id: channelId || null,
+                    xp_per_message: xpPer,
+                    xp_cooldown: cooldown,
+                    voice_xp_enabled: voiceXp,
+                    voice_xp_per_minute: voiceXpPer,
+                    text_no_xp_channel_ids: textNoXp,
+                    voice_no_xp_channel_ids: voiceNoXp
+                })
+            }).then(r => { if (!r.ok) alert('Taso-asetusten tallennus epäonnistui'); });
+        }
+        document.getElementById('level-enabled')?.addEventListener('change', saveLevelSettings);
+        document.getElementById('level-channel')?.addEventListener('change', saveLevelSettings);
+        document.getElementById('level-xp-per')?.addEventListener('change', saveLevelSettings);
+        document.getElementById('level-cooldown')?.addEventListener('change', saveLevelSettings);
+        document.getElementById('level-voice-xp')?.addEventListener('change', saveLevelSettings);
+        document.getElementById('level-voice-xp-per')?.addEventListener('change', saveLevelSettings);
+        document.getElementById('text-no-xp')?.addEventListener('change', saveLevelSettings);
+        document.getElementById('voice-no-xp')?.addEventListener('change', saveLevelSettings);
+
+        // Taso-roolit
+        function getLevelRoles() {
+            const out = {};
+            document.querySelectorAll('.level-role-row').forEach(row => {
+                const lvl = row.dataset.level;
+                const sel = row.querySelector('.level-role-select');
+                if (sel && sel.value) out[lvl] = sel.value;
+            });
+            return out;
+        }
+        function saveLevelRoles() {
+            fetch(`/api/guild/${guildId}/level/roles`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ level_roles: getLevelRoles() })
+            }).then(r => { if (!r.ok) alert('Taso-roolien tallennus epäonnistui'); });
+        }
+        function addLevelRoleRow(lvl, roleId) {
+            const container = document.getElementById('level-roles-container');
+            const roles = Array.from(document.querySelectorAll('#level-add-role option')).map(o => ({ id: o.value, name: o.text }));
+            const row = document.createElement('div');
+            row.className = 'ticket-row level-role-row';
+            row.dataset.level = lvl;
+            const opts = roles.filter(r => r.id).map(r => `<option value="${r.id}" ${r.id === roleId ? 'selected' : ''}>${r.name}</option>`).join('');
+            row.innerHTML = `<label>Taso ${lvl}</label><div style="display: flex; gap: 0.5rem; align-items: center;"><select class="channel-select level-role-select" data-level="${lvl}" style="flex: 1;"><option value="">– Ei roolia –</option>${opts}</select><button type="button" class="btn btn-ghost level-role-remove" data-level="${lvl}" title="Poista">×</button></div>`;
+            container.appendChild(row);
+            row.querySelector('.level-role-select').addEventListener('change', saveLevelRoles);
+            row.querySelector('.level-role-remove').addEventListener('click', () => { row.remove(); saveLevelRoles(); });
+        }
+        document.getElementById('level-add-btn')?.addEventListener('click', function() {
+            const lvl = document.getElementById('level-add-num')?.value;
+            const roleId = document.getElementById('level-add-role')?.value;
+            if (!lvl || !roleId) { alert('Valitse taso ja rooli'); return; }
+            const n = parseInt(lvl, 10);
+            if (n < 1 || n > 100) { alert('Tason täytyy olla 1–100'); return; }
+            if (document.querySelector(`.level-role-row[data-level="${n}"]`)) { alert('Taso on jo listassa'); return; }
+            addLevelRoleRow(n, roleId);
+            saveLevelRoles();
+        });
+        document.querySelectorAll('.level-role-remove').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.level-role-row')?.remove();
+                saveLevelRoles();
+            });
+        });
+        document.querySelectorAll('.level-role-select').forEach(sel => {
+            sel.addEventListener('change', saveLevelRoles);
+        });
+        document.getElementById('level-auto-btn')?.addEventListener('click', async function() {
+            const input = document.getElementById('level-auto-levels')?.value || '';
+            const levels = input.split(/[,\s]+/).map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 1 && n <= 100);
+            if (!levels.length) { alert('Kirjoita tasot (esim. 5, 10, 15, 20)'); return; }
+            this.disabled = true;
+            const res = await fetch(`/api/guild/${guildId}/level/auto-create-roles`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ levels })
+            });
+            const data = await res.json().catch(() => ({}));
+            this.disabled = false;
+            if (res.ok && data.created) {
+                Object.entries(data.created).forEach(([lvl, roleId]) => {
+                    if (!document.querySelector(`.level-role-row[data-level="${lvl}"]`)) addLevelRoleRow(lvl, roleId);
+                });
+                document.getElementById('level-auto-levels').value = '';
+                alert('Roolit luotu: ' + Object.keys(data.created).join(', '));
+                location.reload();
+            } else {
+                alert(data.error || 'Roolien luonti epäonnistui. Tarkista että bottilla on Manage Roles -oikeus.');
+            }
+        });
+
         document.getElementById('ticket-category')?.addEventListener('change', saveTicketSettings);
         document.getElementById('ticket-channel')?.addEventListener('change', saveTicketSettings);
 
@@ -293,5 +550,7 @@
             });
         }
     </script>
+    <footer class="site-footer">© <span id="year"></span> S44Gaming. Kaikki oikeudet pidätetään.</footer>
+    <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>

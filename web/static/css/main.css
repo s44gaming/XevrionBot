@@ -498,3 +498,28 @@ body {
     align-items: flex-start;
   }
 }
+
+/* Sivuston footer – tekijänoikeudet */
+.site-footer {
+  margin-top: 3rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  border-top: 1px solid var(--border);
+}
+.site-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.site-footer a:hover {
+  color: var(--accent);
+}
+.landing .site-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: none;
+  margin-top: 0;
+}

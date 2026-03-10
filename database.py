@@ -1,3 +1,4 @@
+import math
 import sqlite3
 import json
 import os
@@ -73,6 +74,14 @@ def init_db():
                 mod_id TEXT NOT NULL,
                 reason TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS user_xp (
+                guild_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                xp INTEGER DEFAULT 0,
+                PRIMARY KEY (guild_id, user_id)
             )
         """)
 
@@ -162,6 +171,27 @@ def set_log_enabled(guild_id: str, log_key: str, enabled: bool) -> None:
     set_guild_settings(guild_id, settings)
 
 
+def get_fivem_settings(guild_id: str) -> dict:
+    """Palauttaa FiveM-asetukset: host, port, channel_id (status kanavalle)."""
+    settings = get_guild_settings(guild_id)
+    return {
+        "host": (settings.get("fivem_host") or "").strip(),
+        "port": str(settings.get("fivem_port") or "30120").strip() or "30120",
+        "channel_id": settings.get("fivem_channel_id") or None,
+    }
+
+
+def set_fivem_settings(guild_id: str, host: str | None = None, port: str | None = None, channel_id: str | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if host is not None:
+        s["fivem_host"] = str(host).strip() if host else ""
+    if port is not None:
+        s["fivem_port"] = str(port).strip() if port else "30120"
+    if channel_id is not None:
+        s["fivem_channel_id"] = str(channel_id) if channel_id else None
+    set_guild_settings(guild_id, s)
+
+
 def add_warn(guild_id: str, user_id: str, mod_id: str, reason: str = "") -> int:
     with _get_conn() as conn:
         c = conn.execute(
@@ -229,6 +259,119 @@ def set_ticket_settings(guild_id: str, staff_role_id: str | None = None, categor
         else:
             s.pop("ticket_channel_id", None)
     set_guild_settings(guild_id, s)
+
+
+def get_level_settings(guild_id: str) -> dict:
+    """Levelli-asetukset: enabled, channel_id, xp_per_message, xp_cooldown, level_roles,
+    voice_xp_enabled, voice_xp_per_minute, text_no_xp_channels, voice_no_xp_channels."""
+    settings = get_guild_settings(guild_id)
+    level_roles = settings.get("level_roles") or {}
+    if not isinstance(level_roles, dict):
+        level_roles = {}
+    text_no = settings.get("text_no_xp_channel_ids") or []
+    voice_no = settings.get("voice_no_xp_channel_ids") or []
+    if not isinstance(text_no, list):
+        text_no = []
+    if not isinstance(voice_no, list):
+        voice_no = []
+    return {
+        "enabled": bool(settings.get("level_enabled", False)),
+        "channel_id": settings.get("level_channel_id"),
+        "xp_per_message": int(settings.get("level_xp_per_message", 15)),
+        "xp_cooldown": int(settings.get("level_xp_cooldown", 60)),
+        "level_roles": {str(k): str(v) for k, v in level_roles.items()},
+        "voice_xp_enabled": bool(settings.get("voice_xp_enabled", False)),
+        "voice_xp_per_minute": int(settings.get("voice_xp_per_minute", 10)),
+        "text_no_xp_channel_ids": [str(c) for c in text_no],
+        "voice_no_xp_channel_ids": [str(c) for c in voice_no],
+    }
+
+
+def set_level_settings(guild_id: str, enabled: bool | None = None, channel_id: str | None = None,
+                       xp_per_message: int | None = None, xp_cooldown: int | None = None,
+                       level_roles: dict | None = None, voice_xp_enabled: bool | None = None,
+                       voice_xp_per_minute: int | None = None,
+                       text_no_xp_channel_ids: list | None = None,
+                       voice_no_xp_channel_ids: list | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["level_enabled"] = bool(enabled)
+    if channel_id is not None:
+        if channel_id:
+            s["level_channel_id"] = str(channel_id)
+        else:
+            s.pop("level_channel_id", None)
+    if xp_per_message is not None:
+        s["level_xp_per_message"] = max(1, min(100, int(xp_per_message)))
+    if xp_cooldown is not None:
+        s["level_xp_cooldown"] = max(10, min(300, int(xp_cooldown)))
+    if level_roles is not None:
+        s["level_roles"] = {str(k): str(v) for k, v in level_roles.items()}
+    if voice_xp_enabled is not None:
+        s["voice_xp_enabled"] = bool(voice_xp_enabled)
+    if voice_xp_per_minute is not None:
+        s["voice_xp_per_minute"] = max(1, min(100, int(voice_xp_per_minute)))
+    if text_no_xp_channel_ids is not None:
+        s["text_no_xp_channel_ids"] = [str(c) for c in text_no_xp_channel_ids if c]
+    if voice_no_xp_channel_ids is not None:
+        s["voice_no_xp_channel_ids"] = [str(c) for c in voice_no_xp_channel_ids if c]
+    set_guild_settings(guild_id, s)
+
+
+def get_user_xp(guild_id: str, user_id: str) -> tuple[int, int]:
+    """Palauttaa (xp, level) -parin."""
+    with _get_conn() as conn:
+        row = conn.execute(
+            "SELECT xp FROM user_xp WHERE guild_id = ? AND user_id = ?",
+            (str(guild_id), str(user_id)),
+        ).fetchone()
+    xp = int(row[0]) if row else 0
+    level = _xp_to_level(xp)
+    return xp, level
+
+
+def _xp_to_level(xp: int) -> int:
+    """Laske taso XP-pisteistä. Taso N vaatii 100*N XP:tä (taso 1=100, 2=200 lisää jne)."""
+    if xp <= 0:
+        return 0
+    # total_xp_for_level(L) = 100 * L*(L+1)/2
+    # xp = 100 * L*(L+1)/2  =>  L^2 + L - 2*xp/100 = 0  =>  L = (-1 + sqrt(1+8*xp/100))/2
+    level = int((math.sqrt(1 + 8 * xp / 100) - 1) / 2)
+    return max(0, level)
+
+
+def _xp_for_level(level: int) -> int:
+    """XP määrä tason saavuttamiseen."""
+    return 100 * level * (level + 1) // 2
+
+
+def add_user_xp(guild_id: str, user_id: str, amount: int) -> tuple[int, int, bool]:
+    """Lisää XP:tä. Palauttaa (uusi_xp, uusi_level, taso_nousi)."""
+    with _get_conn() as conn:
+        row = conn.execute(
+            "SELECT xp FROM user_xp WHERE guild_id = ? AND user_id = ?",
+            (str(guild_id), str(user_id)),
+        ).fetchone()
+        old_xp = int(row[0]) if row else 0
+        old_level = _xp_to_level(old_xp)
+        new_xp = old_xp + amount
+        conn.execute(
+            "INSERT INTO user_xp (guild_id, user_id, xp) VALUES (?, ?, ?) "
+            "ON CONFLICT(guild_id, user_id) DO UPDATE SET xp = excluded.xp",
+            (str(guild_id), str(user_id), new_xp),
+        )
+    new_level = _xp_to_level(new_xp)
+    return new_xp, new_level, new_level > old_level
+
+
+def get_leaderboard(guild_id: str, limit: int = 10) -> list[tuple[str, int, int]]:
+    """Palauttaa top-käyttäjät: [(user_id, xp, level), ...]"""
+    with _get_conn() as conn:
+        rows = conn.execute(
+            "SELECT user_id, xp FROM user_xp WHERE guild_id = ? ORDER BY xp DESC LIMIT ?",
+            (str(guild_id), limit),
+        ).fetchall()
+    return [(r[0], r[1], _xp_to_level(r[1])) for r in rows]
 
 
 def clear_warns(guild_id: str, user_id: str) -> int:

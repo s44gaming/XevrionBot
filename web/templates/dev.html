@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kehittäjäportaali – Xevrion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .dev-stats { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+        .dev-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; min-width: 120px; }
+        .dev-stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .dev-stat-value { font-family: var(--font-mono); font-size: 1.1rem; font-weight: 600; margin-top: 0.25rem; }
+        .dev-stat-value.ready { color: var(--success); }
+        .dev-stat-value.offline { color: var(--danger); }
+        .dev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .dev-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+        .dev-card h3 { margin: 0 0 1rem; font-size: 1rem; color: var(--text-muted); }
+        .dev-actions { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; color: white; }
+        .btn-warning { background: #f59e0b; color: #111; }
+        .btn-warning:hover { background: #d97706; color: #111; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #16a34a; color: white; }
+        .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+        .console-box { background: #0d0e11; border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; font-family: var(--font-mono); font-size: 0.78rem; max-height: 450px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; line-height: 1.4; }
+        .console-line { padding: 0.12rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .console-toolbar { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
+        .guild-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .guild-table th, .guild-table td { text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border); }
+        .guild-table th { color: var(--text-muted); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; }
+        .ext-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .ext-tag { background: var(--accent-dim); color: var(--accent); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.8rem; }
+        .sys-info { font-family: var(--font-mono); font-size: 0.85rem; }
+        .sys-info dt { color: var(--text-muted); margin-top: 0.5rem; }
+        .sys-info dd { margin: 0.1rem 0 0; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/dashboard" class="brand">Xevrion</a>
+        <nav class="nav">
+            <a href="/dashboard" class="btn btn-ghost">&larr; Dashboard</a>
+            <span class="user-badge">{{ user.username }}</span>
+            <a href="/logout" class="btn btn-ghost">Kirjaudu ulos</a>
+        </nav>
+    </header>
+    <main class="main" style="max-width: 960px;">
+        <section class="section">
+            <a href="/dashboard" class="back-link">&larr; Takaisin dashboardiin</a>
+            <h1>Kehittäjäportaali</h1>
+            <p class="muted">Bottin tilat, järjestelmä, palvelimet, konsoliloki ja hallinta</p>
+
+            <h2 class="subsection-title">Pikatilastot</h2>
+            <div class="dev-stats" id="stats">
+                <div class="dev-stat"><div class="dev-stat-label">Tila</div><div class="dev-stat-value" id="stat-status">–</div></div>
+                <div class="dev-stat"><div class="dev-stat-label">Latenssi</div><div class="dev-stat-value" id="stat-latency">–</div></div>
+                <div class="dev-stat"><div class="dev-stat-label">Palvelimet</div><div class="dev-stat-value" id="stat-guilds">–</div></div>
+                <div class="dev-stat"><div class="dev-stat-label">Käyttäjät</div><div class="dev-stat-value" id="stat-users">–</div></div>
+                <div class="dev-stat"><div class="dev-stat-label">Ajoaika</div><div class="dev-stat-value" id="stat-uptime">–</div></div>
+                <div class="dev-stat"><div class="dev-stat-label">Komennot</div><div class="dev-stat-value" id="stat-commands">–</div></div>
+                <div class="dev-stat"><div class="dev-stat-label">Muisti</div><div class="dev-stat-value" id="stat-memory">–</div></div>
+            </div>
+
+            <h2 class="subsection-title">Hallinta</h2>
+            <div class="dev-actions">
+                <button type="button" class="btn btn-success" id="btn-start">Käynnistä botti</button>
+                <button type="button" class="btn btn-warning" id="btn-restart">Käynnistä koko sovellus uudelleen</button>
+                <button type="button" class="btn btn-danger" id="btn-shutdown">Sammuta vain botti</button>
+            </div>
+
+            <div class="dev-grid">
+                <div class="dev-card">
+                    <h3>Järjestelmä</h3>
+                    <dl class="sys-info" id="sysinfo">
+                        <dt>Python</dt><dd id="si-python">–</dd>
+                        <dt>discord.py</dt><dd id="si-discord">–</dd>
+                        <dt>Alusta</dt><dd id="si-platform">–</dd>
+                        <dt>Botti</dt><dd id="si-bot">–</dd>
+                    </dl>
+                </div>
+                <div class="dev-card">
+                    <h3>Extensiot</h3>
+                    <div class="ext-list" id="extensions"></div>
+                </div>
+            </div>
+
+            <h2 class="subsection-title">Botin tiedot</h2>
+            <p class="muted subsection-desc">Kuvaus, kehittäjät ja kutsu-linkki (näkyvät statuksessa). Muokkaus vaatii muokkaussalasanan.</p>
+            <div class="panel" id="bot-info-panel">
+                <p id="bot-info-text"><span class="muted">Ladataan…</span></p>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-bot-info-edit">Muokkaa (vaatii salasanan)</button>
+            </div>
+            <div class="panel" id="bot-info-form" style="display:none;">
+                <form id="form-bot-info">
+                    <label class="muted" style="display:block; margin-bottom:0.25rem;">Muokkaussalasana</label>
+                    <input type="password" id="bot-info-password" placeholder="Salasana" style="margin-bottom:1rem; padding:0.5rem; width:100%; max-width:280px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--text);">
+                    <label class="muted" style="display:block; margin-bottom:0.25rem;">Kuvaus</label>
+                    <input type="text" id="bot-info-description" placeholder="BOT_DESCRIPTION" style="margin-bottom:1rem; padding:0.5rem; width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--text);">
+                    <label class="muted" style="display:block; margin-bottom:0.25rem;">Kehittäjät (pilkulla erotettuna)</label>
+                    <input type="text" id="bot-info-developers" placeholder="S44Gaming" style="margin-bottom:1rem; padding:0.5rem; width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--text);">
+                    <label class="muted" style="display:block; margin-bottom:0.25rem;">Yhteisön kutsu (palvelimelle liittyminen)</label>
+                    <input type="url" id="bot-info-invite" placeholder="https://discord.gg/..." style="margin-bottom:1rem; padding:0.5rem; width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--text);">
+                    <label class="muted" style="display:block; margin-bottom:0.25rem;">Apply bot – linkki lisätä botti palvelimelle</label>
+                    <input type="url" id="bot-info-apply" placeholder="https://discord.com/api/oauth2/authorize?client_id=..." style="margin-bottom:1rem; padding:0.5rem; width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--text);">
+                    <button type="submit" class="btn btn-primary">Tallenna</button>
+                    <button type="button" class="btn btn-ghost" id="btn-bot-info-cancel">Peruuta</button>
+                </form>
+            </div>
+
+            <h2 class="subsection-title">Palvelimet</h2>
+            <div class="panel">
+                <table class="guild-table" id="guild-table">
+                    <thead><tr><th>Palvelin</th><th>ID</th><th>Jäsenet</th><th></th></tr></thead>
+                    <tbody id="guilds-body"></tbody>
+                </table>
+                <p class="muted" id="guilds-empty" style="display:none; margin:0.5rem 0 0;">Ei palvelimia tai botti ei ole vielä online.</p>
+            </div>
+
+            <h2 class="subsection-title">Konsoliloki</h2>
+            <div class="console-toolbar">
+                <label><input type="checkbox" id="console-autoscroll" checked> Auto-scroll</label>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-console-clear">Tyhjennä</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-console-copy">Kopioi</button>
+            </div>
+            <div class="panel">
+                <div class="console-box" id="console"></div>
+            </div>
+        </section>
+        <footer class="site-footer">© <span id="year"></span> S44Gaming. Kaikki oikeudet pidätetään.</footer>
+    </main>
+    <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+    <script>
+        const fmtTime = (s) => {
+            if (s == null) return '–';
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = Math.floor(s % 60);
+            if (h > 0) return `${h}h ${m}m`;
+            if (m > 0) return `${m}m ${sec}s`;
+            return `${sec}s`;
+        };
+        const escapeHtml = (s) => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+
+        const fetchStats = () => {
+            fetch('/api/dev/stats').then(r => r.json()).then(data => {
+                const statusEl = document.getElementById('stat-status');
+                statusEl.textContent = data.bot_ready ? 'Online' : 'Offline';
+                statusEl.className = 'dev-stat-value ' + (data.bot_ready ? 'ready' : 'offline');
+                document.getElementById('stat-latency').textContent = data.latency_ms != null ? data.latency_ms + ' ms' : '–';
+                document.getElementById('stat-guilds').textContent = data.guild_count != null ? data.guild_count : '–';
+                document.getElementById('stat-users').textContent = data.user_count != null ? data.user_count.toLocaleString() : '–';
+                document.getElementById('stat-uptime').textContent = fmtTime(data.uptime_seconds);
+                document.getElementById('stat-commands').textContent = data.command_count != null ? data.command_count : '–';
+                document.getElementById('stat-memory').textContent = data.memory_mb != null ? data.memory_mb + ' MB' : '–';
+
+                document.getElementById('si-python').textContent = data.python_version || '–';
+                document.getElementById('si-discord').textContent = data.discord_version || '–';
+                document.getElementById('si-platform').textContent = [data.platform, data.platform_release].filter(Boolean).join(' ') || '–';
+                document.getElementById('si-bot').textContent = data.bot_username || (data.bot_ready ? '…' : '–');
+
+                const extEl = document.getElementById('extensions');
+                extEl.innerHTML = (data.extensions || []).map(e => `<span class="ext-tag">${escapeHtml(e)}</span>`).join('') || '<span class="muted">–</span>';
+
+                const tbody = document.getElementById('guilds-body');
+                const empty = document.getElementById('guilds-empty');
+                if (data.guilds && data.guilds.length) {
+                    tbody.innerHTML = data.guilds.map(g => `<tr><td>${escapeHtml(g.name)}</td><td><code>${escapeHtml(g.id)}</code></td><td>${(g.members || 0).toLocaleString()}</td><td><button type="button" class="btn btn-ghost btn-sm btn-leave" data-guild-id="${escapeHtml(g.id)}" data-guild-name="${escapeHtml(g.name)}">Poista palvelimelta</button></td></tr>`).join('');
+                    tbody.querySelectorAll('.btn-leave').forEach(btn => {
+                        btn.onclick = () => {
+                            const id = btn.dataset.guildId, name = btn.dataset.guildName;
+                            if (!confirm(`Poistetaanko botti palvelimelta "${name}"?`)) return;
+                            btn.disabled = true;
+                            fetch(`/api/dev/guild/${id}/leave`, { method: 'POST' }).then(r => r.json()).then(d => {
+                                alert(d.message || d.error || (d.success ? 'OK' : 'Virhe'));
+                                fetchStats();
+                            }).catch(() => { btn.disabled = false; });
+                        };
+                    });
+                    empty.style.display = 'none';
+                } else {
+                    tbody.innerHTML = '';
+                    empty.style.display = 'block';
+                }
+
+                document.getElementById('btn-start').style.display = data.bot_ready ? 'none' : 'inline-flex';
+            }).catch(() => {});
+        };
+
+        const fetchConsole = () => {
+            fetch('/api/dev/console?limit=300').then(r => r.json()).then(data => {
+                const box = document.getElementById('console');
+                const wasBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 50;
+                box.innerHTML = (data.lines || []).map(l => `<div class="console-line">${escapeHtml(l)}</div>`).join('');
+                if (document.getElementById('console-autoscroll').checked && wasBottom) box.scrollTop = box.scrollHeight;
+            }).catch(() => {});
+        };
+
+        document.getElementById('btn-start').onclick = () => {
+            fetch('/api/dev/start', { method: 'POST' }).then(r => r.json()).then(d => {
+                alert(d.message || (d.error || 'OK'));
+                if (d.success) fetchStats();
+            });
+        };
+        document.getElementById('btn-restart').onclick = () => {
+            if (!confirm('Käynnistetään koko sovellus uudelleen. Jatketaanko?')) return;
+            fetch('/api/dev/restart', { method: 'POST' }).then(() => alert('Sovellus käynnistyy uudelleen. Sivu sulkeutuu pian.'));
+        };
+        document.getElementById('btn-shutdown').onclick = () => {
+            const msg = 'Sammutetaan vain botti.\n\n' +
+                'Botti menee Discordissa offline-tilaan ja ei reagoi komentoihin tai muihin toimintoihin. Web-käyttöliittymä jää päälle.\n\n' +
+                'Vahvista sammutus:';
+            if (!confirm(msg)) return;
+            fetch('/api/dev/shutdown', { method: 'POST' }).then(r => r.json()).then(d => alert(d.message || 'Botti sammutetaan.')).then(fetchStats);
+        };
+        document.getElementById('btn-console-clear').onclick = () => {
+            fetch('/api/dev/console/clear', { method: 'POST' }).then(() => fetchConsole());
+        };
+        document.getElementById('btn-console-copy').onclick = () => {
+            const box = document.getElementById('console');
+            navigator.clipboard.writeText(box.innerText).then(() => alert('Kopioitu leikepöydälle'));
+        };
+
+        const fetchBotInfo = () => {
+            fetch('/api/dev/bot-info').then(r => r.json()).then(data => {
+                const el = document.getElementById('bot-info-text');
+                if (data.error) { el.innerHTML = '<span class="muted">' + escapeHtml(data.error) + '</span>'; return; }
+                const parts = [];
+                if (data.description) parts.push('Kuvaus: ' + escapeHtml(data.description));
+                if (data.developers && data.developers.length) parts.push('Kehittäjät: ' + escapeHtml(data.developers.join(', ')));
+                if (data.invite_link) parts.push('Yhteisön kutsu: ' + escapeHtml(data.invite_link));
+                if (data.apply_bot_url) parts.push('Apply bot: ' + escapeHtml(data.apply_bot_url));
+                el.innerHTML = parts.length ? parts.join('<br>') : '<span class="muted">Ei tietoja</span>';
+                if (data.protected) el.innerHTML += ' <span class="muted">(salattu)</span>';
+                document.getElementById('bot-info-description').value = data.description || '';
+                document.getElementById('bot-info-developers').value = (data.developers || []).join(', ');
+                document.getElementById('bot-info-invite').value = data.invite_link || '';
+                document.getElementById('bot-info-apply').value = data.apply_bot_url || '';
+            }).catch(() => { document.getElementById('bot-info-text').innerHTML = '<span class="muted">Virhe</span>'; });
+        };
+        document.getElementById('btn-bot-info-edit').onclick = () => {
+            document.getElementById('bot-info-panel').style.display = 'none';
+            document.getElementById('bot-info-form').style.display = 'block';
+        };
+        document.getElementById('btn-bot-info-cancel').onclick = () => {
+            document.getElementById('bot-info-form').style.display = 'none';
+            document.getElementById('bot-info-panel').style.display = 'block';
+        };
+        document.getElementById('form-bot-info').onsubmit = (e) => {
+            e.preventDefault();
+            const password = document.getElementById('bot-info-password').value.trim();
+            if (!password) { alert('Syötä muokkaussalasana.'); return; }
+            fetch('/api/dev/bot-info/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    password: password,
+                    description: document.getElementById('bot-info-description').value.trim(),
+                    developers: document.getElementById('bot-info-developers').value.trim(),
+                    invite_link: document.getElementById('bot-info-invite').value.trim(),
+                    apply_bot_url: document.getElementById('bot-info-apply').value.trim()
+                })
+            }).then(r => r.json()).then(d => {
+                if (d.success) {
+                    alert(d.message || 'Tallennettu.');
+                    document.getElementById('bot-info-form').style.display = 'none';
+                    document.getElementById('bot-info-panel').style.display = 'block';
+                    document.getElementById('bot-info-password').value = '';
+                    fetchBotInfo();
+                } else {
+                    alert(d.error || 'Tallennus epäonnistui.');
+                }
+            });
+        };
+
+        fetchBotInfo();
+        fetchStats();
+        fetchConsole();
+        setInterval(fetchStats, 5000);
+        setInterval(fetchConsole, 3000);
+    </script>
+</body>
+</html>
