@@ -488,6 +488,25 @@ body {
   font-weight: 500;
 }
 
+.twitch-streamers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.twitch-streamer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+.twitch-login {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
 .empty {
   color: var(--text-muted);
   text-align: center;

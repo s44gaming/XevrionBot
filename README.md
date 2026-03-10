@@ -15,6 +15,7 @@ Python-pohjainen Discord-botti (Xevrion), joka tukee useaa palvelinta ja web-kä
 - **Levellijärjestelmä** – taso ja XP, tasonboard – asetukset webistä
 - **Minipelit** – kolikko, noppa, 8-pallo, kivi-paperi-sakset, arpa, ruletti – kytkettävissä webistä
 - **FiveM-palvelimen tila** – /fivem näyttää pelaajamäärän jne., asetukset (host, port, status-kanava) webistä
+- **Twitch stream -ilmoitukset** – ilmoitus kun seuraamasi streameri aloittaa striimin, streamerit ja kanava webistä
 - **Kehittäjäportaali** – DEV_USER_IDS -käyttäjille: bottin tilat, konsoliloki, käynnistä/sammuta, palvelimen poisto
 
 ## Vaatimukset
@@ -77,6 +78,10 @@ BOT_DEVELOPERS=S44Gaming
 BOT_INVITE_LINK=https://discord.gg/...
 BOT_APPLY_URL=
 BOT_INFO_EDIT_PASSWORD=  # Muokkaussalasana kehittäjäportaalin Botin tiedot -osiolle
+
+# Twitch stream -ilmoitukset (valinnainen)
+TWITCH_CLIENT_ID=
+TWITCH_CLIENT_SECRET=
 ```
 
 **FLASK_SECRET_KEY**: Luo turvallinen satunnainen avain esim. komennolla:
@@ -113,6 +118,7 @@ Tämä käynnistää:
 | **Komennot** | Ping, Komennot, Info, Tervehdys, Hallinta, Kutsu, Kutsuviesti, Tiketti, Taso, Tasonboard – päälle/pois |
 | **Minipelit** | Kolikko, Noppa, 8-pallo, Kivi-paperi-sakset, Arvaa luku, Arpa, Ruletti – päälle/pois |
 | **FiveM** | Palvelimen osoite, portti (oletus 30120), kanava johon status voidaan lähettää |
+| **Twitch** | Seuratut streamerit (käyttäjänimet), kanava johon ilmoitukset lähetetään |
 | **Moderaatio** | Moderaattoriroolit, yksittäisten mod-toimintojen päälle/pois |
 | **Logit** | Logikanava, lokityypit (mod-toiminnot, jäsen liittyy/poistuu, viestin poisto/muokkaus) |
 | **Tervetuloa** | Päälle/pois, tervetulokanava |
@@ -184,6 +190,35 @@ Jos Discord-käyttäjä-IDsi on `.env`:ssä `DEV_USER_IDS`-listalla, näet linki
 |---------|--------|
 | `/fivem` | FiveM-palvelimen tila (pelaajat, kartta). Aseta palvelin webistä. Valinnalla »Lähetä kanavalle« lähettää statusin asetettuun kanavaan. |
 
+### Twitch stream -ilmoitukset
+
+Botti lähettää automaattisesti viestin Discord-kanavalle, kun joku seuraamistasi Twitch-streamereistä aloittaa striimin.
+
+**Miten Twitch-ilmoitukset saadaan toimimaan**
+
+1. **Luo Twitch-sovellus**
+   - Mene [Twitch Developer Console](https://dev.twitch.tv/console)
+   - **Register Your Application** → anna nimi, käyttötarkoitus (esim. "Discord bot stream notifications")
+   - Valitse **Application Category** (esim. Application Integration)
+   - OAuth Redirect URL voi olla `http://localhost` (ei tarvita tähän ominaisuuteen)
+   - Luo sovellus ja avaa sen asetuksista **Client ID** sekä luo **Client Secret**
+
+2. **Lisää tunnukset .env-tiedostoon**
+   ```env
+   TWITCH_CLIENT_ID=client_id_tähän
+   TWITCH_CLIENT_SECRET=client_secret_tähän
+   ```
+
+3. **Aseta web-dashboardissa** (Twitch stream -ilmoitukset -osio)
+   - Ota Twitch käyttöön Komennot-osiosta (Twitch-valintaruutu)
+   - Lisää seuratut streamerit (Twitch-käyttäjänimet, esim. `s44gaming`)
+   - Valitse kanava johon ilmoitukset lähetetään
+   - Tallenna asetukset
+
+4. **Käynnistä botti** – ilmoitukset alkavat noin 2 minuutin sisällä kun streameri aloittaa striimin
+
+Ilmoituksessa näkyy striimin nimi, peli, katsojamäärä ja linkki Twitchiin. Jos TWITCH_CLIENT_ID tai TWITCH_CLIENT_SECRET puuttuu, ominaisuus ei toimi.
+
 ### Tikettijärjestelmä
 
 | Komento | Kuvaus |
@@ -223,6 +258,7 @@ DiscordBotti/
 ├── config.py           # Konfiguraatio
 ├── bot_info.py         # Botin tiedot (kuvaus, kehittäjät, linkit) – salasanasuojattu
 ├── fivem_status.py     # FiveM-palvelimen tilan haku
+├── twitch_streams.py   # Twitch API -apu (livestream-kyselyt)
 ├── shared_state.py     # Jaettu tila (dev-portaalia varten)
 ├── logs.py
 ├── requirements.txt
@@ -242,7 +278,8 @@ DiscordBotti/
 ├── events/
 │   ├── on_ready.py
 │   ├── server_logs.py
-│   └── levels.py
+│   ├── levels.py
+│   └── twitch_streams.py  # Twitch stream -ilmoitukset (taustapollaus)
 ├── web/
 │   ├── templates/
 │   └── static/

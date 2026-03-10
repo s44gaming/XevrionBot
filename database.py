@@ -192,6 +192,27 @@ def set_fivem_settings(guild_id: str, host: str | None = None, port: str | None 
     set_guild_settings(guild_id, s)
 
 
+def get_twitch_settings(guild_id: str) -> dict:
+    """Palauttaa Twitch-asetukset: streamers (lista käyttäjänimistä), channel_id."""
+    settings = get_guild_settings(guild_id)
+    streamers = settings.get("twitch_streamers") or []
+    if not isinstance(streamers, list):
+        streamers = []
+    return {
+        "streamers": [str(s).strip().lower() for s in streamers if s and str(s).strip()],
+        "channel_id": settings.get("twitch_channel_id") or None,
+    }
+
+
+def set_twitch_settings(guild_id: str, streamers: list | None = None, channel_id: str | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if streamers is not None:
+        s["twitch_streamers"] = [str(x).strip().lower() for x in streamers if x and str(x).strip()]
+    if channel_id is not None:
+        s["twitch_channel_id"] = str(channel_id) if channel_id else None
+    set_guild_settings(guild_id, s)
+
+
 def add_warn(guild_id: str, user_id: str, mod_id: str, reason: str = "") -> int:
     with _get_conn() as conn:
         c = conn.execute(

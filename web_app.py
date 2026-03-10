@@ -42,6 +42,7 @@ COMMAND_FEATURES = [
     ("arpa", "Arpa", "/arpa – arpa valitsee vaihtoehdoista"),
     ("ruletti", "Ruletti", "/ruletti – venäläinen ruletti (1/6)"),
     ("fivem", "FiveM", "/fivem – FiveM-palvelimen tila (asetukset webistä)"),
+    ("twitch", "Twitch", "Ilmoitukset uusista streameistä (lisää seuraajat webistä)"),
 ]
 
 MOD_FEATURES = [
@@ -528,12 +529,16 @@ def guild_settings(guild_id):
     fivem_host = settings.get("fivem_host") or ""
     fivem_port = settings.get("fivem_port") or "30120"
     fivem_channel = settings.get("fivem_channel_id")
+    twitch_streamers = settings.get("twitch_streamers") or []
+    twitch_channel = settings.get("twitch_channel_id")
     return render_template(
         "guild_settings.html",
         guild=guild,
         fivem_host=fivem_host,
         fivem_port=fivem_port,
         fivem_channel=fivem_channel,
+        twitch_streamers=twitch_streamers,
+        twitch_channel=twitch_channel,
         features=features,
         mod_features=mod_features,
         roles=roles,
@@ -589,6 +594,25 @@ def api_set_fivem_settings(guild_id):
     if channel_id is not None:
         channel_id = str(channel_id) if channel_id else None
     database.set_fivem_settings(guild_id, host=host, port=port, channel_id=channel_id)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/twitch/settings", methods=["POST"])
+@login_required
+def api_set_twitch_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    streamers = data.get("streamers", [])
+    if isinstance(streamers, list):
+        streamers = [str(s).strip().lower() for s in streamers if s and str(s).strip()]
+    else:
+        streamers = []
+    channel_id = data.get("channel_id")
+    if channel_id is not None:
+        channel_id = str(channel_id) if channel_id else None
+    database.set_twitch_settings(guild_id, streamers=streamers, channel_id=channel_id)
     return jsonify({"success": True})
 
 

@@ -75,6 +75,9 @@ class Bot(commands.Bot):
     def get_fivem_settings(self, guild_id: int) -> dict:
         return self._db.get_fivem_settings(str(guild_id))
 
+    def get_twitch_settings(self, guild_id: int) -> dict:
+        return self._db.get_twitch_settings(str(guild_id))
+
     def _presence_text(self) -> str:
         """Status-teksti: palvelimien määrä, kuvaus, kehittäjät, kutsu (max 128 merkkiä)."""
         n = len(self.guilds)

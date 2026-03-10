@@ -294,6 +294,37 @@
                 <button type="button" class="btn btn-primary" id="fivem-save">Tallenna</button>
             </div>
 
+            <h2 class="subsection-title">Twitch stream -ilmoitukset</h2>
+            <p class="muted subsection-desc">Lisää Twitch-käyttäjänimet ja valitse kanava. Kun streameri aloittaa striimin, botti lähettää ilmoituksen. Vaatii TWITCH_CLIENT_ID ja TWITCH_CLIENT_SECRET .env-tiedostossa.</p>
+            <div class="panel">
+                <h3 class="panel-title">Seuratut streamerit</h3>
+                <div id="twitch-streamers-list" class="twitch-streamers-list">
+                    {% for s in twitch_streamers %}
+                    <div class="twitch-streamer-row" data-login="{{ s }}">
+                        <span class="twitch-login">twitch.tv/{{ s }}</span>
+                        <button type="button" class="btn btn-ghost twitch-remove" data-login="{{ s }}" title="Poista">Poista</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="ticket-row" style="margin-top: 1rem;">
+                    <label>Lisää streameri (käyttäjänimi)</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="twitch-add-input" placeholder="esim. s44gaming" class="channel-select" style="max-width: 200px;">
+                        <button type="button" id="twitch-add-btn" class="btn btn-ghost">Lisää</button>
+                    </div>
+                </div>
+                <div class="ticket-row">
+                    <label>Kanava johon ilmoitukset lähetetään</label>
+                    <select id="twitch-channel" class="channel-select" style="max-width: 280px;">
+                        <option value="">– Ei kanavaa –</option>
+                        {% for ch in channels %}
+                        <option value="{{ ch.id }}" {% if twitch_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" id="twitch-save">Tallenna Twitch-asetukset</button>
+            </div>
+
             <div class="panel">
                 <h3 class="panel-title">Logityypit</h3>
                 <div class="features-list">
@@ -409,6 +440,54 @@
                 body: JSON.stringify({ host, port, channel_id: channelId || null })
             }).then(r => {
                 if (r.ok) alert('FiveM-asetukset tallennettu.');
+                else alert('Tallennus epäonnistui.');
+            });
+        });
+
+        // Twitch-asetukset
+        function getTwitchStreamers() {
+            return Array.from(document.querySelectorAll('.twitch-streamer-row')).map(r => r.dataset.login);
+        }
+        function addTwitchStreamerRow(login) {
+            const list = document.getElementById('twitch-streamers-list');
+            const row = document.createElement('div');
+            row.className = 'twitch-streamer-row';
+            row.dataset.login = login;
+            row.innerHTML = `<span class="twitch-login">twitch.tv/${escapeHtml(login)}</span> <button type="button" class="btn btn-ghost twitch-remove" data-login="${escapeHtml(login)}" title="Poista">Poista</button>`;
+            list.appendChild(row);
+            row.querySelector('.twitch-remove').addEventListener('click', () => { row.remove(); });
+        }
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+        document.getElementById('twitch-add-btn')?.addEventListener('click', function() {
+            const input = document.getElementById('twitch-add-input');
+            const login = (input?.value || '').trim().toLowerCase();
+            if (!login) return;
+            if (getTwitchStreamers().includes(login)) {
+                alert('Streameri on jo listalla.');
+                return;
+            }
+            addTwitchStreamerRow(login);
+            input.value = '';
+        });
+        document.getElementById('twitch-add-input')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('twitch-add-btn')?.click();
+        });
+        document.querySelectorAll('.twitch-remove').forEach(btn => {
+            btn.addEventListener('click', function() { this.closest('.twitch-streamer-row')?.remove(); });
+        });
+        document.getElementById('twitch-save')?.addEventListener('click', function() {
+            const streamers = getTwitchStreamers();
+            const channelId = document.getElementById('twitch-channel')?.value || '';
+            fetch(`/api/guild/${guildId}/twitch/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ streamers, channel_id: channelId || null })
+            }).then(r => {
+                if (r.ok) alert('Twitch-asetukset tallennettu.');
                 else alert('Tallennus epäonnistui.');
             });
         });
