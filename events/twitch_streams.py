@@ -1,5 +1,8 @@
 """Twitch stream -ilmoitukset: taustatehtävä pollaa Twitch API ja lähettää Discord-viestin kun stream alkaa."""
 import asyncio
+import logging
+
+log = logging.getLogger(__name__)
 import database
 import discord
 import twitch_streams as twitch_api
@@ -45,7 +48,10 @@ async def _poll_and_notify(bot):
         for user_login, channel_id in items:
             key = (gid, user_login.lower())
             is_live = user_login.lower() in live_by_login
-            was_live = _state.get(key, False)
+            if key not in _state:
+                _state[key] = is_live
+                continue
+            was_live = _state[key]
             _state[key] = is_live
             if is_live and not was_live:
                 s = live_by_login.get(user_login.lower(), {})
@@ -55,8 +61,8 @@ async def _poll_and_notify(bot):
 async def _send_stream_embed(bot, channel_id: int, stream_data: dict):
     """Lähettää Discord-embedin streamista."""
     try:
-        channel = bot.get_channel(channel_id)
-        if not channel or not isinstance(channel, discord.TextChannel):
+        channel = await bot.fetch_channel(channel_id)
+        if not isinstance(channel, discord.TextChannel):
             return
         user_name = stream_data.get("user_name", "Unknown")
         title = stream_data.get("title") or f"{user_name} on nyt livessä!"
@@ -79,8 +85,8 @@ async def _send_stream_embed(bot, channel_id: int, stream_data: dict):
         embed.set_author(name=user_name, url=url, icon_url=None)
 
         await channel.send(embed=embed)
-    except Exception:
-        pass
+    except Exception as e:
+        log.exception("Twitch-embedin lähetys epäonnistui channel_id=%s: %s", channel_id, e)
 
 
 async def _twitch_loop(bot):
@@ -89,8 +95,8 @@ async def _twitch_loop(bot):
     while not bot.is_closed():
         try:
             await _poll_and_notify(bot)
-        except Exception:
-            pass
+        except Exception as e:
+            log.exception("Twitch-pollausvirhe: %s", e)
         await asyncio.sleep(POLL_INTERVAL)
 
 

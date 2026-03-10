@@ -1,7 +1,10 @@
 """Twitch stream -ilmoitukset: pollaa API ja lähettää viestin kun streameri aloittaa striimin."""
+import logging
 import os
 import time
 import requests
+
+log = logging.getLogger(__name__)
 
 TWITCH_API = "https://api.twitch.tv/helix"
 TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token"
@@ -30,6 +33,7 @@ def _get_twitch_token() -> str | None:
         timeout=_REQ_TIMEOUT,
     )
     if r.status_code != 200:
+        log.warning("Twitch token-haku epäonnistui: %s %s", r.status_code, r.text[:200])
         return None
     data = r.json()
     _twitch_token = data.get("access_token")
@@ -49,7 +53,7 @@ def fetch_live_streams(user_logins: list[str]) -> list[dict]:
         "Authorization": f"Bearer {token}",
         "Client-Id": client_id,
     }
-    logins = ",".join(user_logins[:100])
+    logins = user_logins[:100]
     r = requests.get(
         f"{TWITCH_API}/streams",
         params={"user_login": logins},
@@ -57,6 +61,7 @@ def fetch_live_streams(user_logins: list[str]) -> list[dict]:
         timeout=_REQ_TIMEOUT,
     )
     if r.status_code != 200:
+        log.warning("Twitch streams-API epäonnistui: %s %s", r.status_code, r.text[:200])
         return []
     data = r.json()
     return data.get("data") or []
