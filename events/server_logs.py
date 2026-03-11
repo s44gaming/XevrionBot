@@ -23,8 +23,26 @@ async def setup(bot):
             if welcome.get("enabled") and welcome.get("channel_id"):
                 channel = await bot.fetch_channel(welcome["channel_id"])
                 if isinstance(channel, discord.TextChannel):
-                    await channel.send(f"Tervetuloa {member.mention} palvelimelle! 👋")
+                    msg = (welcome.get("message") or "Tervetuloa {mention} palvelimelle! 👋").replace(
+                        "{user}", member.display_name
+                    ).replace("{mention}", member.mention).replace("{server}", member.guild.name).replace(
+                        "{member_count}", str(member.guild.member_count or 0)
+                    )
+                    await channel.send(msg)
         except (discord.NotFound, discord.Forbidden, AttributeError):
+            pass
+        # Autorole – anna roolit uusille jäsenille
+        try:
+            ar = bot.get_autorole_settings(member.guild.id)
+            if ar.get("enabled") and ar.get("role_ids"):
+                for rid in ar["role_ids"]:
+                    try:
+                        role = member.guild.get_role(int(rid))
+                        if role and role < member.guild.me.top_role:
+                            await member.add_roles(role, reason="Autorole")
+                    except (discord.NotFound, discord.Forbidden, ValueError):
+                        pass
+        except (AttributeError, TypeError):
             pass
 
     async def on_member_remove(member: discord.Member):
@@ -36,6 +54,18 @@ async def setup(bot):
             f"**Jäsen:** {member} (`{member.id}`)",
             color=discord.Color.red(),
         )
+        # Poistumisviesti
+        try:
+            goodbye = bot.get_goodbye_settings(member.guild.id)
+            if goodbye.get("enabled") and goodbye.get("channel_id"):
+                channel = await bot.fetch_channel(goodbye["channel_id"])
+                if isinstance(channel, discord.TextChannel):
+                    msg = (goodbye.get("message") or "**{user}** lähti palvelimelta. 👋").replace(
+                        "{user}", member.display_name
+                    ).replace("{server}", member.guild.name)
+                    await channel.send(msg)
+        except (discord.NotFound, discord.Forbidden, AttributeError):
+            pass
 
     async def on_message_delete(message: discord.Message):
         if not message.guild:

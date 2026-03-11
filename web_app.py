@@ -48,6 +48,10 @@ COMMAND_FEATURES = [
     ("ruletti", "Ruletti", "/ruletti – venäläinen ruletti (1/6)"),
     ("fivem", "FiveM", "/fivem – FiveM-palvelimen tila (asetukset webistä)"),
     ("twitch", "Twitch", "Ilmoitukset uusista streameistä (lisää seuraajat webistä)"),
+    ("ehdotus", "Ehdotus", "/ehdotus – lähetä ehdotus kanavalle"),
+    ("afk", "AFK", "/afk – aseta AFK-tila (vastaus kun mainitaan)"),
+    ("arvonta", "Arvonta", "/arvonta – arvo voittajat viestistä (mod)"),
+    ("muistutus", "Muistutus", "/muistutus – aseta muistutus"),
 ]
 
 MOD_FEATURES = [
@@ -580,6 +584,25 @@ def guild_settings(guild_id):
     fivem_channel = settings.get("fivem_channel_id")
     twitch_streamers = settings.get("twitch_streamers") or []
     twitch_channel = settings.get("twitch_channel_id")
+    # Autorole, goodbye, starboard
+    autorole_enabled = bool(settings.get("autorole_enabled", False))
+    autorole_roles = settings.get("autorole_role_ids") or []
+    if not isinstance(autorole_roles, list):
+        autorole_roles = []
+    goodbye_enabled = bool(settings.get("goodbye_enabled", False))
+    goodbye_channel = settings.get("goodbye_channel_id")
+    starboard_channel = settings.get("starboard_channel_id")
+    starboard_min_stars = int(settings.get("starboard_min_stars", 3))
+    # Ehdotus, AFK, Arvonta, Muistutus
+    suggestion_enabled = bool(settings.get("suggestion_enabled", False))
+    suggestion_channel = settings.get("suggestion_channel_id")
+    afk_enabled = bool(settings.get("afk_enabled", True))
+    giveaway_enabled = bool(settings.get("giveaway_enabled", True))
+    reminder_enabled = bool(settings.get("reminder_enabled", True))
+    reminder_max = int(settings.get("reminder_max_per_user", 5))
+    reminder_cooldown = int(settings.get("reminder_cooldown_sec", 60))
+    welcome_message = settings.get("welcome_message") or "Tervetuloa {mention} palvelimelle! 👋"
+    goodbye_message = settings.get("goodbye_message") or "**{user}** lähti palvelimelta. 👋"
     return render_template(
         "guild_settings.html",
         guild=guild,
@@ -611,6 +634,21 @@ def guild_settings(guild_id):
         level_voice_xp_per=int(settings.get("voice_xp_per_minute", 10)),
         text_no_xp=text_no if isinstance(text_no, list) else [],
         voice_no_xp=voice_no if isinstance(voice_no, list) else [],
+        autorole_enabled=autorole_enabled,
+        autorole_roles=autorole_roles,
+        goodbye_enabled=goodbye_enabled,
+        goodbye_channel=goodbye_channel,
+        starboard_channel=starboard_channel,
+        starboard_min_stars=starboard_min_stars,
+        suggestion_enabled=suggestion_enabled,
+        suggestion_channel=suggestion_channel,
+        afk_enabled=afk_enabled,
+        giveaway_enabled=giveaway_enabled,
+        reminder_enabled=reminder_enabled,
+        reminder_max=reminder_max,
+        reminder_cooldown=reminder_cooldown,
+        welcome_message=welcome_message,
+        goodbye_message=goodbye_message,
         user=session["user"]
     )
 
@@ -658,9 +696,8 @@ def api_set_twitch_settings(guild_id):
         streamers = [str(s).strip().lower() for s in streamers if s and str(s).strip()]
     else:
         streamers = []
-    channel_id = data.get("channel_id")
-    if channel_id is not None:
-        channel_id = str(channel_id) if channel_id else None
+    raw = data.get("channel_id")
+    channel_id = str(raw).strip() if raw else None
     database.set_twitch_settings(guild_id, streamers=streamers, channel_id=channel_id)
     return jsonify({"success": True})
 
@@ -729,8 +766,9 @@ def api_set_welcome_settings(guild_id):
     channel_id = None
     if "channel_id" in data:
         ch = data["channel_id"]
-        channel_id = str(ch) if ch else ""  # "" = tyhjennä kanava
-    database.set_welcome_settings(guild_id, enabled=enabled, channel_id=channel_id)
+        channel_id = str(ch) if ch else ""
+    message = data.get("message") if "message" in data else None
+    database.set_welcome_settings(guild_id, enabled=enabled, channel_id=channel_id, message=message)
     return jsonify({"success": True})
 
 
@@ -809,6 +847,104 @@ def api_auto_create_level_roles(guild_id):
         level_roles.update(created)
         database.set_level_settings(guild_id, level_roles=level_roles)
     return jsonify({"success": True, "created": created})
+
+
+@app.route("/api/guild/<guild_id>/autorole/settings", methods=["POST"])
+@login_required
+def api_set_autorole_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    enabled = bool(data["enabled"]) if "enabled" in data else None
+    role_ids = data.get("role_ids")
+    if role_ids is not None and not isinstance(role_ids, list):
+        role_ids = []
+    database.set_autorole_settings(guild_id, enabled=enabled, role_ids=role_ids)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/goodbye/settings", methods=["POST"])
+@login_required
+def api_set_goodbye_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    enabled = bool(data["enabled"]) if "enabled" in data else None
+    channel_id = data.get("channel_id")
+    if channel_id is not None:
+        channel_id = str(channel_id) if channel_id else None
+    message = data.get("message") if "message" in data else None
+    database.set_goodbye_settings(guild_id, enabled=enabled, channel_id=channel_id, message=message)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/suggestion/settings", methods=["POST"])
+@login_required
+def api_set_suggestion_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    enabled = bool(data["enabled"]) if "enabled" in data else None
+    channel_id = data.get("channel_id")
+    channel_id = str(channel_id) if channel_id else None
+    database.set_suggestion_settings(guild_id, enabled=enabled, channel_id=channel_id)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/afk/settings", methods=["POST"])
+@login_required
+def api_set_afk_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    enabled = bool(data["enabled"]) if "enabled" in data else None
+    database.set_afk_settings(guild_id, enabled=enabled)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/giveaway/settings", methods=["POST"])
+@login_required
+def api_set_giveaway_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    enabled = bool(data["enabled"]) if "enabled" in data else None
+    database.set_giveaway_settings(guild_id, enabled=enabled)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/reminder/settings", methods=["POST"])
+@login_required
+def api_set_reminder_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    enabled = bool(data["enabled"]) if "enabled" in data else None
+    max_per = data.get("max_per_user")
+    cooldown = data.get("cooldown_sec")
+    database.set_reminder_settings(guild_id, enabled=enabled, max_per_user=max_per, cooldown_sec=cooldown)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/starboard/settings", methods=["POST"])
+@login_required
+def api_set_starboard_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    channel_id = data.get("channel_id")
+    if channel_id is not None:
+        channel_id = str(channel_id) if channel_id else None
+    min_stars = data.get("min_stars")
+    database.set_starboard_settings(guild_id, channel_id=channel_id, min_stars=min_stars)
+    return jsonify({"success": True})
 
 
 @app.route("/api/guild/<guild_id>/ticket/settings", methods=["POST"])

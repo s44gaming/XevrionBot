@@ -84,6 +84,25 @@ def init_db():
                 PRIMARY KEY (guild_id, user_id)
             )
         """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS afk_users (
+                guild_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                reason TEXT,
+                set_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (guild_id, user_id)
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                channel_id TEXT NOT NULL,
+                message TEXT,
+                fire_at REAL NOT NULL
+            )
+        """)
 
 
 def get_guild_settings(guild_id: str) -> dict:
@@ -208,8 +227,7 @@ def set_twitch_settings(guild_id: str, streamers: list | None = None, channel_id
     s = get_guild_settings(guild_id)
     if streamers is not None:
         s["twitch_streamers"] = [str(x).strip().lower() for x in streamers if x and str(x).strip()]
-    if channel_id is not None:
-        s["twitch_channel_id"] = str(channel_id) if channel_id else None
+    s["twitch_channel_id"] = str(channel_id).strip() if channel_id else None
     set_guild_settings(guild_id, s)
 
 
@@ -242,15 +260,16 @@ def get_ticket_settings(guild_id: str) -> dict:
 
 
 def get_welcome_settings(guild_id: str) -> dict:
-    """Palauttaa tervetuloa-asetukset: enabled, channel_id."""
+    """Palauttaa tervetuloa-asetukset: enabled, channel_id, message (valinnainen, {user} {server} {member_count} {mention})."""
     settings = get_guild_settings(guild_id)
     return {
         "enabled": bool(settings.get("welcome_enabled", False)),
         "channel_id": settings.get("welcome_channel_id"),
+        "message": (settings.get("welcome_message") or "Tervetuloa {mention} palvelimelle! 👋").strip(),
     }
 
 
-def set_welcome_settings(guild_id: str, enabled: bool | None = None, channel_id: str | None = None) -> None:
+def set_welcome_settings(guild_id: str, enabled: bool | None = None, channel_id: str | None = None, message: str | None = None) -> None:
     s = get_guild_settings(guild_id)
     if enabled is not None:
         s["welcome_enabled"] = bool(enabled)
@@ -259,6 +278,136 @@ def set_welcome_settings(guild_id: str, enabled: bool | None = None, channel_id:
             s["welcome_channel_id"] = str(channel_id)
         else:
             s.pop("welcome_channel_id", None)
+    if message is not None:
+        s["welcome_message"] = str(message).strip() if message else "Tervetuloa {mention} palvelimelle! 👋"
+    set_guild_settings(guild_id, s)
+
+
+def get_autorole_settings(guild_id: str) -> dict:
+    """Autorole: role_ids lista rooleja joita uudet jäsenet saavat."""
+    settings = get_guild_settings(guild_id)
+    roles = settings.get("autorole_role_ids") or []
+    if not isinstance(roles, list):
+        roles = []
+    return {"enabled": bool(settings.get("autorole_enabled", False)), "role_ids": [str(r) for r in roles]}
+
+
+def set_autorole_settings(guild_id: str, enabled: bool | None = None, role_ids: list | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["autorole_enabled"] = bool(enabled)
+    if role_ids is not None:
+        s["autorole_role_ids"] = [str(r) for r in role_ids if r]
+    set_guild_settings(guild_id, s)
+
+
+def get_goodbye_settings(guild_id: str) -> dict:
+    """Poistumisviesti: enabled, channel_id, message ({user} {server})."""
+    settings = get_guild_settings(guild_id)
+    return {
+        "enabled": bool(settings.get("goodbye_enabled", False)),
+        "channel_id": settings.get("goodbye_channel_id"),
+        "message": (settings.get("goodbye_message") or "**{user}** lähti palvelimelta. 👋").strip(),
+    }
+
+
+def set_goodbye_settings(guild_id: str, enabled: bool | None = None, channel_id: str | None = None, message: str | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["goodbye_enabled"] = bool(enabled)
+    if channel_id is not None:
+        if channel_id:
+            s["goodbye_channel_id"] = str(channel_id)
+        else:
+            s.pop("goodbye_channel_id", None)
+    if message is not None:
+        s["goodbye_message"] = str(message).strip() if message else "**{user}** lähti palvelimelta. 👋"
+    set_guild_settings(guild_id, s)
+
+
+def get_suggestion_settings(guild_id: str) -> dict:
+    """Ehdotusjärjestelmä: enabled, channel_id."""
+    settings = get_guild_settings(guild_id)
+    return {
+        "enabled": bool(settings.get("suggestion_enabled", False)),
+        "channel_id": settings.get("suggestion_channel_id"),
+    }
+
+
+def set_suggestion_settings(guild_id: str, enabled: bool | None = None, channel_id: str | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["suggestion_enabled"] = bool(enabled)
+    if channel_id is not None:
+        s["suggestion_channel_id"] = str(channel_id) if channel_id else None
+    set_guild_settings(guild_id, s)
+
+
+def get_afk_settings(guild_id: str) -> dict:
+    """AFK: enabled."""
+    settings = get_guild_settings(guild_id)
+    return {"enabled": bool(settings.get("afk_enabled", True))}
+
+
+def set_afk_settings(guild_id: str, enabled: bool | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["afk_enabled"] = bool(enabled)
+    set_guild_settings(guild_id, s)
+
+
+def get_giveaway_settings(guild_id: str) -> dict:
+    """Arvonta: enabled (mod-only)."""
+    settings = get_guild_settings(guild_id)
+    return {"enabled": bool(settings.get("giveaway_enabled", True))}
+
+
+def set_giveaway_settings(guild_id: str, enabled: bool | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["giveaway_enabled"] = bool(enabled)
+    set_guild_settings(guild_id, s)
+
+
+def get_reminder_settings(guild_id: str) -> dict:
+    """Muistutus: enabled, max_per_user, cooldown_sec."""
+    settings = get_guild_settings(guild_id)
+    return {
+        "enabled": bool(settings.get("reminder_enabled", True)),
+        "max_per_user": int(settings.get("reminder_max_per_user", 5)),
+        "cooldown_sec": int(settings.get("reminder_cooldown_sec", 60)),
+    }
+
+
+def set_reminder_settings(guild_id: str, enabled: bool | None = None, max_per_user: int | None = None, cooldown_sec: int | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["reminder_enabled"] = bool(enabled)
+    if max_per_user is not None:
+        s["reminder_max_per_user"] = max(1, min(20, int(max_per_user)))
+    if cooldown_sec is not None:
+        s["reminder_cooldown_sec"] = max(30, min(3600, int(cooldown_sec)))
+    set_guild_settings(guild_id, s)
+
+
+def get_starboard_settings(guild_id: str) -> dict:
+    """Starboard: channel_id, min_stars."""
+    settings = get_guild_settings(guild_id)
+    return {
+        "channel_id": settings.get("starboard_channel_id"),
+        "min_stars": int(settings.get("starboard_min_stars", 3)),
+    }
+
+
+def set_starboard_settings(guild_id: str, channel_id: str | None = None, min_stars: int | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if channel_id is not None:
+        if channel_id:
+            s["starboard_channel_id"] = str(channel_id)
+        else:
+            s.pop("starboard_channel_id", None)
+    if min_stars is not None:
+        s["starboard_min_stars"] = max(1, min(20, int(min_stars)))
     set_guild_settings(guild_id, s)
 
 
@@ -399,5 +548,62 @@ def clear_warns(guild_id: str, user_id: str) -> int:
     with _get_conn() as conn:
         c = conn.execute("DELETE FROM warns WHERE guild_id = ? AND user_id = ?", (str(guild_id), str(user_id)))
         return int(c.rowcount or 0)
+
+
+def set_afk(guild_id: str, user_id: str, reason: str = "") -> None:
+    with _get_conn() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO afk_users (guild_id, user_id, reason, set_at) VALUES (?, ?, ?, datetime('now'))",
+            (str(guild_id), str(user_id), (reason or "AFK")[:500]),
+        )
+
+
+def get_afk(guild_id: str, user_id: str) -> dict | None:
+    with _get_conn() as conn:
+        row = conn.execute(
+            "SELECT reason, set_at FROM afk_users WHERE guild_id = ? AND user_id = ?",
+            (str(guild_id), str(user_id)),
+        ).fetchone()
+    if row:
+        return {"reason": row[0] or "AFK", "set_at": row[1]}
+    return None
+
+
+def clear_afk(guild_id: str, user_id: str) -> bool:
+    with _get_conn() as conn:
+        c = conn.execute("DELETE FROM afk_users WHERE guild_id = ? AND user_id = ?", (str(guild_id), str(user_id)))
+        return (c.rowcount or 0) > 0
+
+
+def add_reminder(guild_id: str, user_id: str, channel_id: str, message: str, fire_at: float) -> int:
+    with _get_conn() as conn:
+        c = conn.execute(
+            "INSERT INTO reminders (guild_id, user_id, channel_id, message, fire_at) VALUES (?, ?, ?, ?, ?)",
+            (str(guild_id), str(user_id), str(channel_id), (message or "")[:500], fire_at),
+        )
+        return int(c.lastrowid or 0)
+
+
+def get_due_reminders(now: float) -> list[dict]:
+    with _get_conn() as conn:
+        rows = conn.execute(
+            "SELECT id, guild_id, user_id, channel_id, message FROM reminders WHERE fire_at <= ?",
+            (now,),
+        ).fetchall()
+    return [{"id": r[0], "guild_id": r[1], "user_id": r[2], "channel_id": r[3], "message": r[4]} for r in rows]
+
+
+def delete_reminder(reminder_id: int) -> None:
+    with _get_conn() as conn:
+        conn.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
+
+
+def count_user_reminders(guild_id: str, user_id: str) -> int:
+    with _get_conn() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) FROM reminders WHERE guild_id = ? AND user_id = ?",
+            (str(guild_id), str(user_id)),
+        ).fetchone()
+    return int(row[0]) if row else 0
 
 # Tekijänoikeudet S44Gaming kaikki oikeudet pidätetään. https://discord.gg/ujB4JHfgcg

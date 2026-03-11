@@ -78,6 +78,27 @@ class Bot(commands.Bot):
     def get_twitch_settings(self, guild_id: int) -> dict:
         return self._db.get_twitch_settings(str(guild_id))
 
+    def get_autorole_settings(self, guild_id: int) -> dict:
+        return self._db.get_autorole_settings(str(guild_id))
+
+    def get_goodbye_settings(self, guild_id: int) -> dict:
+        return self._db.get_goodbye_settings(str(guild_id))
+
+    def get_starboard_settings(self, guild_id: int) -> dict:
+        return self._db.get_starboard_settings(str(guild_id))
+
+    def get_suggestion_settings(self, guild_id: int) -> dict:
+        return self._db.get_suggestion_settings(str(guild_id))
+
+    def get_afk_settings(self, guild_id: int) -> dict:
+        return self._db.get_afk_settings(str(guild_id))
+
+    def get_giveaway_settings(self, guild_id: int) -> dict:
+        return self._db.get_giveaway_settings(str(guild_id))
+
+    def get_reminder_settings(self, guild_id: int) -> dict:
+        return self._db.get_reminder_settings(str(guild_id))
+
     def _presence_text(self) -> str:
         """Status-teksti: palvelimien määrä, kuvaus, kehittäjät, kutsu (max 128 merkkiä)."""
         n = len(self.guilds)

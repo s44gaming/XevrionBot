@@ -34,10 +34,11 @@
                 </div>
             </div>
 
-            <h2 class="subsection-title">Komennot</h2>
-            <p class="muted subsection-desc">Valitse mitkä komennot ovat käytettävissä. Voit kytkeä jokaisen päälle tai pois.</p>
-            <div class="panel">
-                <h3 class="panel-title">Perus- ja tasokomennot</h3>
+            <div class="settings-grid">
+            <!-- Komennot -->
+            <div class="settings-card">
+                <h2>Komennot</h2>
+                <p class="card-desc">Valitse mitkä komennot ovat käytettävissä.</p>
                 <div class="features-list">
                 {% for f in features %}
                 <div class="feature-row" data-feature="{{ f.key }}">
@@ -53,12 +54,11 @@
                 {% endfor %}
                 </div>
             </div>
-            <p class="muted subsection-desc" style="margin-top: 0.5rem;">Moderaatiokomennot (kick, ban, mute, clear jne.) ovat alla Moderaatio-osiossa.</p>
 
-            <h2 class="subsection-title">Moderaatio</h2>
-            <p class="muted subsection-desc">Ylläpitäjillä on aina oikeus. Lisäksi voit valita moderaattoriroolit ja kytkeä yksittäiset toiminnot päälle/pois.</p>
-
-            <div class="panel">
+            <!-- Moderaatio -->
+            <div class="settings-card">
+                <h2>Moderaatio</h2>
+                <p class="card-desc">Moderaattoriroolit ja toiminnot (kick, ban, mute jne.).</p>
                 <h3 class="panel-title">Moderaattoriroolit</h3>
                 {% if roles %}
                 <div class="role-grid" id="role-grid">
@@ -70,12 +70,9 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="empty">Roolit eivät ole saatavilla. Varmista, että botti on palvelimella.</p>
+                <p class="empty">Roolit eivät ole saatavilla.</p>
                 {% endif %}
-            </div>
-
-            <div class="panel">
-                <h3 class="panel-title">Moderaatiotoiminnot</h3>
+                <h3 class="panel-title" style="margin-top: 1rem;">Moderaatiotoiminnot</h3>
                 <div class="features-list">
                     {% for f in mod_features %}
                     <div class="feature-row">
@@ -92,25 +89,43 @@
                 </div>
             </div>
 
-            <h2 class="subsection-title">Moderaatio-lokit</h2>
-            <p class="feature-desc subsection-desc">Valitse kanava ja mitkä logit ovat käytössä. Tämä koskee kaikkia tämän Discord-palvelimen logeja.</p>
-            <div class="panel">
-                <h3 class="panel-title">Logikanava</h3>
-                <select id="log-channel" class="channel-select">
-                    <option value="">– Ei kanavaa –</option>
-                    {% for ch in channels %}
-                    <option value="{{ ch.id }}" {% if log_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
-                    {% endfor %}
-                </select>
+            <!-- Moderaatio-lokit -->
+            <div class="settings-card">
+                <h2>Moderaatio-lokit</h2>
+                <p class="card-desc">Logikanava ja mitkä logit ovat käytössä.</p>
+                <div class="ticket-row">
+                    <label>Logikanava</label>
+                    <select id="log-channel" class="channel-select">
+                        <option value="">– Ei kanavaa –</option>
+                        {% for ch in channels %}
+                        <option value="{{ ch.id }}" {% if log_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 {% if not channels %}
-                <p class="empty">Botti ei ole palvelimella tai kanavia ei löydy. Lisää botti palvelimelle ensin.</p>
+                <p class="empty">Botti ei ole palvelimella tai kanavia ei löydy.</p>
                 {% endif %}
+                <h3 class="panel-title" style="margin-top: 1rem;">Logityypit</h3>
+                <div class="features-list">
+                    {% for f in log_features %}
+                    <div class="feature-row">
+                        <div class="feature-info">
+                            <strong>{{ f.label }}</strong>
+                            <span class="feature-desc">{{ f.description }}</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" {% if f.enabled %}checked{% endif %} data-log-feature="{{ f.key }}">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
 
-            <h2 class="subsection-title">Tervetuloa-viesti</h2>
-            <p class="muted subsection-desc">Lähetä tervetuloa-viesti kun uusi jäsen liittyy palvelimelle. Valitse kanava ja kytke päälle/pois.</p>
-            <div class="panel">
-                <h3 class="panel-title">Tervetuloa-asetukset</h3>
+            <!-- Tervetuloa-viesti -->
+            <div class="settings-card">
+                <h2>Tervetuloa-viesti</h2>
+                <p class="card-desc">Lähetä viesti kun uusi jäsen liittyy.</p>
                 <div class="ticket-settings">
                     <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
                         <label class="toggle">
@@ -120,7 +135,7 @@
                         <label for="welcome-enabled" style="margin: 0;">Päällä</label>
                     </div>
                     <div class="ticket-row">
-                        <label>Kanava johon viesti lähetetään</label>
+                        <label>Kanava</label>
                         <select id="welcome-channel" class="channel-select">
                             <option value="">– Ei kanavaa –</option>
                             {% for ch in channels %}
@@ -128,12 +143,129 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="ticket-row">
+                        <label>Viestimalli ({user} {mention} {server} {member_count})</label>
+                        <input type="text" id="welcome-message" value="{{ welcome_message }}" placeholder="Tervetuloa {mention} palvelimelle! 👋" class="channel-select">
+                    </div>
                 </div>
             </div>
 
-            <h2 class="subsection-title">Levellijärjestelmä</h2>
-            <p class="muted subsection-desc">XP viesteistä, tasoja ja taso-ilmoituksia. Voit muuttaa XP/viesti, cooldownin sekä määrittää tiettyihin tasoihin roolit. Bottin pitää pystyä antamaan rooleja (Manage Roles).</p>
-            <div class="panel">
+            <!-- Poistumisviesti -->
+            <div class="settings-card">
+                <h2>Poistumisviesti</h2>
+                <p class="card-desc">Lähetä viesti kun jäsen lähtee palvelimelta.</p>
+                <div class="ticket-settings">
+                    <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
+                        <label class="toggle">
+                            <input type="checkbox" id="goodbye-enabled" {% if goodbye_enabled %}checked{% endif %}>
+                            <span class="toggle-track"></span>
+                        </label>
+                        <label for="goodbye-enabled" style="margin: 0;">Päällä</label>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Kanava</label>
+                        <select id="goodbye-channel" class="channel-select">
+                            <option value="">– Ei kanavaa –</option>
+                            {% for ch in channels %}
+                            <option value="{{ ch.id }}" {% if goodbye_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Viestimalli ({user} {server})</label>
+                        <input type="text" id="goodbye-message" value="{{ goodbye_message }}" placeholder="**{user}** lähti palvelimelta. 👋" class="channel-select">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ehdotus -->
+            <div class="settings-card">
+                <h2>Ehdotus</h2>
+                <p class="card-desc">/ehdotus lähettää ehdotuksen kanavalle.</p>
+                <div class="ticket-settings">
+                    <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
+                        <label class="toggle">
+                            <input type="checkbox" id="suggestion-enabled" {% if suggestion_enabled %}checked{% endif %}>
+                            <span class="toggle-track"></span>
+                        </label>
+                        <label for="suggestion-enabled" style="margin: 0;">Päällä</label>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Ehdotuskanava</label>
+                        <select id="suggestion-channel" class="channel-select">
+                            <option value="">– Ei kanavaa –</option>
+                            {% for ch in channels %}
+                            <option value="{{ ch.id }}" {% if suggestion_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AFK & Arvonta & Muistutus -->
+            <div class="settings-card">
+                <h2>AFK, Arvonta, Muistutus</h2>
+                <p class="card-desc">/afk, /arvonta (mod), /muistutus.</p>
+                <div class="ticket-settings">
+                    <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
+                        <label class="toggle">
+                            <input type="checkbox" id="afk-enabled" {% if afk_enabled %}checked{% endif %}>
+                            <span class="toggle-track"></span>
+                        </label>
+                        <label for="afk-enabled" style="margin: 0;">AFK päällä</label>
+                    </div>
+                    <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
+                        <label class="toggle">
+                            <input type="checkbox" id="giveaway-enabled" {% if giveaway_enabled %}checked{% endif %}>
+                            <span class="toggle-track"></span>
+                        </label>
+                        <label for="giveaway-enabled" style="margin: 0;">Arvonta päällä</label>
+                    </div>
+                    <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
+                        <label class="toggle">
+                            <input type="checkbox" id="reminder-enabled" {% if reminder_enabled %}checked{% endif %}>
+                            <span class="toggle-track"></span>
+                        </label>
+                        <label for="reminder-enabled" style="margin: 0;">Muistutus päällä</label>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Muistutuksia / käyttäjä (max)</label>
+                        <input type="number" id="reminder-max" min="1" max="20" value="{{ reminder_max }}" class="channel-select" style="max-width: 80px;">
+                    </div>
+                    <div class="ticket-row">
+                        <label>Muistutuksen cooldown (sek)</label>
+                        <input type="number" id="reminder-cooldown" min="30" max="3600" value="{{ reminder_cooldown }}" class="channel-select" style="max-width: 80px;">
+                    </div>
+Y                </div>
+            </div>
+
+            <!-- Autorole -->
+            <div class="settings-card">
+                <h2>Autorole</h2>
+                <p class="card-desc">Uudet jäsenet saavat automaattisesti valitut roolit.</p>
+                <div class="ticket-settings">
+                    <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
+                        <label class="toggle">
+                            <input type="checkbox" id="autorole-enabled" {% if autorole_enabled %}checked{% endif %}>
+                            <span class="toggle-track"></span>
+                        </label>
+                        <label for="autorole-enabled" style="margin: 0;">Päällä</label>
+                    </div>
+                    <div class="ticket-row">
+                        <label>Roolit (valitse useita Ctrl/Cmd + klikkaus)</label>
+                        <select id="autorole-roles" class="channel-select" multiple size="5">
+                            {% for r in roles %}
+                            <option value="{{ r.id }}" {% if (r.id|string) in autorole_roles %}selected{% endif %}>{{ r.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Levellijärjestelmä -->
+            <div class="settings-card" style="grid-column: 1 / -1;">
+                <h2>Levellijärjestelmä</h2>
+                <p class="card-desc">XP viesteistä, tasoja ja taso-ilmoituksia.</p>
                 <h3 class="panel-title">Taso-asetukset</h3>
                 <div class="ticket-settings">
                     <div class="ticket-row" style="display: flex; align-items: center; gap: 1rem;">
@@ -190,10 +322,8 @@
                         <p class="muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Pidä Ctrl (tai Cmd) pohjassa valitaksesi useita.</p>
                     </div>
                 </div>
-            </div>
 
-            <div class="panel">
-                <h3 class="panel-title">Taso-roolit</h3>
+                <h3 class="panel-title" style="margin-top: 1.5rem;">Taso-roolit</h3>
                 <p class="muted" style="margin-bottom: 0.75rem;">Määritä rooli tietylle tasolle – kun jäsen saavuttaa tason, hän saa roolin automaattisesti.</p>
                 <div id="level-roles-container" class="ticket-settings">
                     {% for lvl, role_id in level_roles.items() %}
@@ -234,10 +364,10 @@
                 </div>
             </div>
 
-            <h2 class="subsection-title">Tikettijärjestelmä</h2>
-            <p class="muted subsection-desc">Valitse rooli joka näkee tiketit, kategoria sekä kanava josta tiketit avataan.</p>
-            <div class="panel">
-                <h3 class="panel-title">Tiketti-asetukset</h3>
+            <!-- Tikettijärjestelmä -->
+            <div class="settings-card">
+                <h2>Tikettijärjestelmä</h2>
+                <p class="card-desc">Rooli, kategoria ja kanava tiketille.</p>
                 <div class="ticket-settings">
                     <div class="ticket-row">
                         <label>Rooli joka näkee tiketit (staff)</label>
@@ -269,10 +399,10 @@
                 </div>
             </div>
 
-            <h2 class="subsection-title">FiveM-palvelin</h2>
-            <p class="muted subsection-desc">Aseta FiveM-palvelimen osoite ja portti. Komennolla /fivem näytetään palvelimen tila (pelaajamäärä jne.).</p>
-            <div class="panel">
-                <h3 class="panel-title">FiveM-asetukset</h3>
+            <!-- FiveM-palvelin -->
+            <div class="settings-card">
+                <h2>FiveM-palvelin</h2>
+                <p class="card-desc">Palvelimen osoite ja /fivem-komento.</p>
                 <div class="ticket-row">
                     <label>Palvelimen osoite (IP tai domain)</label>
                     <input type="text" id="fivem-host" placeholder="esim. play.example.com tai 123.45.67.89" value="{{ fivem_host }}" class="channel-select" style="max-width: 320px;">
@@ -294,10 +424,10 @@
                 <button type="button" class="btn btn-primary" id="fivem-save">Tallenna</button>
             </div>
 
-            <h2 class="subsection-title">Twitch stream -ilmoitukset</h2>
-            <p class="muted subsection-desc">Lisää Twitch-käyttäjänimet ja valitse kanava. Kun streameri aloittaa striimin, botti lähettää ilmoituksen. Vaatii TWITCH_CLIENT_ID ja TWITCH_CLIENT_SECRET .env-tiedostossa.</p>
-            <div class="panel">
-                <h3 class="panel-title">Seuratut streamerit</h3>
+            <!-- Twitch stream -ilmoitukset -->
+            <div class="settings-card">
+                <h2>Twitch-ilmoitukset</h2>
+                <p class="card-desc">Seuraa streamereita ja lähetä ilmoitus kanavalle.</p>
                 <div id="twitch-streamers-list" class="twitch-streamers-list">
                     {% for s in twitch_streamers %}
                     <div class="twitch-streamer-row" data-login="{{ s }}">
@@ -322,25 +452,28 @@
                         {% endfor %}
                     </select>
                 </div>
-                <button type="button" class="btn btn-primary" id="twitch-save">Tallenna Twitch-asetukset</button>
+                <button type="button" class="btn btn-primary" id="twitch-save">Tallenna</button>
             </div>
 
-            <div class="panel">
-                <h3 class="panel-title">Logityypit</h3>
-                <div class="features-list">
-                    {% for f in log_features %}
-                    <div class="feature-row">
-                        <div class="feature-info">
-                            <strong>{{ f.label }}</strong>
-                            <span class="feature-desc">{{ f.description }}</span>
-                        </div>
-                        <label class="toggle">
-                            <input type="checkbox" {% if f.enabled %}checked{% endif %} data-log-feature="{{ f.key }}">
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-                    {% endfor %}
+            <!-- Starboard -->
+            <div class="settings-card">
+                <h2>Starboard ⭐</h2>
+                <p class="card-desc">Viestit joissa tarpeeksi ⭐ kopioidaan kanavalle.</p>
+                <div class="ticket-row">
+                    <label>Starboard-kanava</label>
+                    <select id="starboard-channel" class="channel-select">
+                        <option value="">– Ei kanavaa –</option>
+                        {% for ch in channels %}
+                        <option value="{{ ch.id }}" {% if starboard_channel == (ch.id|string) %}selected{% endif %}>{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
+                <div class="ticket-row">
+                    <label>Vähimmäisreaktiot (1–20)</label>
+                    <input type="number" id="starboard-min-stars" min="1" max="20" value="{{ starboard_min_stars }}" class="channel-select" style="max-width: 80px;">
+                </div>
+                <button type="button" class="btn btn-primary" id="starboard-save">Tallenna</button>
+            </div>
             </div>
         </section>
     </main>
@@ -496,14 +629,97 @@
         function saveWelcomeSettings() {
             const enabled = document.getElementById('welcome-enabled')?.checked ?? false;
             const channelId = document.getElementById('welcome-channel')?.value || '';
+            const message = document.getElementById('welcome-message')?.value?.trim() || '';
             fetch(`/api/guild/${guildId}/welcome/settings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ enabled, channel_id: channelId || null })
+                body: JSON.stringify({ enabled, channel_id: channelId || null, message: message || undefined })
             }).then(r => { if (!r.ok) alert('Tervetuloa-asetusten tallennus epäonnistui'); });
         }
         document.getElementById('welcome-enabled')?.addEventListener('change', saveWelcomeSettings);
         document.getElementById('welcome-channel')?.addEventListener('change', saveWelcomeSettings);
+        document.getElementById('welcome-message')?.addEventListener('blur', saveWelcomeSettings);
+
+        // Poistumisviesti
+        function saveGoodbyeSettings() {
+            const enabled = document.getElementById('goodbye-enabled')?.checked ?? false;
+            const channelId = document.getElementById('goodbye-channel')?.value || '';
+            const message = document.getElementById('goodbye-message')?.value?.trim() || '';
+            fetch(`/api/guild/${guildId}/goodbye/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled, channel_id: channelId || null, message: message || undefined })
+            }).then(r => { if (!r.ok) alert('Tallennus epäonnistui'); });
+        }
+        document.getElementById('goodbye-enabled')?.addEventListener('change', saveGoodbyeSettings);
+        document.getElementById('goodbye-channel')?.addEventListener('change', saveGoodbyeSettings);
+        document.getElementById('goodbye-message')?.addEventListener('blur', saveGoodbyeSettings);
+
+        // Ehdotus
+        function saveSuggestionSettings() {
+            const enabled = document.getElementById('suggestion-enabled')?.checked ?? false;
+            const channelId = document.getElementById('suggestion-channel')?.value || '';
+            fetch(`/api/guild/${guildId}/suggestion/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled, channel_id: channelId || null })
+            }).then(r => { if (!r.ok) alert('Ehdotuksen tallennus epäonnistui'); });
+        }
+        document.getElementById('suggestion-enabled')?.addEventListener('change', saveSuggestionSettings);
+        document.getElementById('suggestion-channel')?.addEventListener('change', saveSuggestionSettings);
+
+        // AFK, Arvonta, Muistutus
+        document.getElementById('afk-enabled')?.addEventListener('change', function() {
+            fetch(`/api/guild/${guildId}/afk/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: this.checked })
+            }).then(r => { if (!r.ok) alert('Tallennus epäonnistui'); });
+        });
+        document.getElementById('giveaway-enabled')?.addEventListener('change', function() {
+            fetch(`/api/guild/${guildId}/giveaway/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: this.checked })
+            }).then(r => { if (!r.ok) alert('Tallennus epäonnistui'); });
+        });
+        function saveReminderSettings() {
+            const enabled = document.getElementById('reminder-enabled')?.checked ?? false;
+            const maxPer = parseInt(document.getElementById('reminder-max')?.value || '5', 10);
+            const cooldown = parseInt(document.getElementById('reminder-cooldown')?.value || '60', 10);
+            fetch(`/api/guild/${guildId}/reminder/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled, max_per_user: maxPer, cooldown_sec: cooldown })
+            }).then(r => { if (!r.ok) alert('Muistutuksen tallennus epäonnistui'); });
+        }
+        document.getElementById('reminder-enabled')?.addEventListener('change', saveReminderSettings);
+        document.getElementById('reminder-max')?.addEventListener('change', saveReminderSettings);
+        document.getElementById('reminder-cooldown')?.addEventListener('change', saveReminderSettings);
+
+        // Autorole
+        function saveAutoroleSettings() {
+            const enabled = document.getElementById('autorole-enabled')?.checked ?? false;
+            const roles = Array.from(document.getElementById('autorole-roles')?.selectedOptions || []).map(o => o.value);
+            fetch(`/api/guild/${guildId}/autorole/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled, role_ids: roles })
+            }).then(r => { if (!r.ok) alert('Autorole-tallennus epäonnistui'); });
+        }
+        document.getElementById('autorole-enabled')?.addEventListener('change', saveAutoroleSettings);
+        document.getElementById('autorole-roles')?.addEventListener('change', saveAutoroleSettings);
+
+        // Starboard
+        document.getElementById('starboard-save')?.addEventListener('click', function() {
+            const channelId = document.getElementById('starboard-channel')?.value || '';
+            const minStars = parseInt(document.getElementById('starboard-min-stars')?.value || '3', 10);
+            fetch(`/api/guild/${guildId}/starboard/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ channel_id: channelId || null, min_stars: minStars })
+            }).then(r => { if (r.ok) alert('Starboard tallennettu.'); else alert('Tallennus epäonnistui.'); });
+        });
 
         // Taso-asetukset
         function saveLevelSettings() {

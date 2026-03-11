@@ -164,8 +164,36 @@ body {
 /* Main content */
 .main {
   padding: 2rem 1.5rem;
-  max-width: 720px;
+  max-width: 1200px;
   margin: 0 auto;
+}
+
+/* Settings grid – Komennot, Moderaatio, Lokit jne. rinnakkain */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.5rem;
+}
+
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-card h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.settings-card .card-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
 }
 
 .section h1 {
@@ -514,6 +542,12 @@ body {
 }
 
 /* Responsive */
+@media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 600px) {
   .header {
     flex-direction: column;

@@ -7,17 +7,16 @@ import database
 import discord
 import twitch_streams as twitch_api
 
-POLL_INTERVAL = 120  # sekuntia
+POLL_INTERVAL = 60  # sekuntia – asetukset luetaan tietokannasta jokaisella pollilla, ei tarvitse uudelleenkäynnistystä
 _state: dict[tuple[str, str], bool] = {}  # (guild_id, user_login) -> was_online
 
 
 def _gather_streamers_by_guild(bot) -> dict[str, list[tuple[str, int]]]:
-    """Kerää kaikki guild_id -> [(user_login, channel_id), ...] joilla on streamereitä ja kanava."""
+    """Kerää kaikki guild_id -> [(user_login, channel_id), ...] joilla on streamereitä ja kanava.
+    Webistä asetettu konfiguraatio riittää – ilmoitukset menevät valitulle kanavalle."""
     result = {}
     for guild in bot.guilds:
         gid = str(guild.id)
-        if not database.is_feature_enabled(gid, "twitch"):
-            continue
         settings = database.get_twitch_settings(gid)
         streamers = settings.get("streamers") or []
         channel_id = settings.get("channel_id")
@@ -34,10 +33,16 @@ def _gather_streamers_by_guild(bot) -> dict[str, list[tuple[str, int]]]:
 
 
 async def _poll_and_notify(bot):
-    """Pollaa Twitch API ja lähettää ilmoitukset uusista streameistä."""
+    """Pollaa Twitch API ja lähettää ilmoitukset uusista streameistä.
+    Lukee asetukset aina tietokannasta – webistä tehdyt muutokset tulevat voimaan max 60 s kuluttua."""
     if not twitch_api.is_twitch_configured():
         return
     by_guild = _gather_streamers_by_guild(bot)
+    # Poista vanhat tilat joita ei enää seuraa
+    active_keys = {(gid, login.lower()) for gid, items in by_guild.items() for login, _ in items}
+    for key in list(_state):
+        if key not in active_keys:
+            del _state[key]
     all_logins = list({login for items in by_guild.values() for login, _ in items})
     if not all_logins:
         return
