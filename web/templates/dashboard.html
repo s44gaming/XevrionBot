@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xevrion – Dashboard</title>
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,21 +14,22 @@
     <header class="header">
         <a href="/dashboard" class="brand">Xevrion</a>
         <nav class="nav">
+            <div id="lang-container"></div>
             {% if is_dev %}
-            <a href="/dev" class="btn btn-ghost">Kehittäjäportaali</a>
+            <a href="/dev" class="btn btn-ghost" data-i18n="nav.developer">Kehittäjäportaali</a>
             {% endif %}
-            <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle" title="Vaihda teema">🌙 Tumma</button>
+            <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle" title="">🌙 Tumma</button>
             <span class="user-badge">{{ user.username }}</span>
-            <a href="/logout" class="btn btn-ghost">Kirjaudu ulos</a>
+            <a href="/logout" class="btn btn-ghost" data-i18n="nav.logout">Kirjaudu ulos</a>
         </nav>
     </header>
     <main class="main">
         <section class="section">
-            <h1>Valitse palvelin</h1>
+            <h1 data-i18n="dash.select_server">Valitse palvelin</h1>
             {% if error %}
-            <p class="error" style="background:#fee;color:#c00;padding:1rem;border-radius:8px;margin-bottom:1rem;">{{ error }} <a href="/dashboard">Yritä uudelleen</a></p>
+            <p class="error" style="background:#fee;color:#c00;padding:1rem;border-radius:8px;margin-bottom:1rem;">{{ error }} <a href="/dashboard" data-i18n="dash.retry">Yritä uudelleen</a></p>
             {% else %}
-            <p class="muted">Valitse palvelin, jonka asetuksia haluat hallita. Vain palvelimet, joilla sinulla on ylläpito-oikeudet, näkyvät täällä.</p>
+            <p class="muted" data-i18n="dash.select_desc">Valitse palvelin, jonka asetuksia haluat hallita. Vain palvelimet, joilla sinulla on ylläpito-oikeudet, näkyvät täällä.</p>
             {% endif %}
             <div class="guild-grid">
                 {% for g in guilds %}
@@ -42,21 +44,29 @@
                     <div class="guild-info">
                         <strong>{{ g.name }}</strong>
                         {% if g.bot_in %}
-                        <a href="{{ url_for('guild_settings', guild_id=g.id) }}" class="guild-card-link">Hallitse asetukset &rarr;</a>
+                        <a href="{{ url_for('guild_settings', guild_id=g.id) }}" class="guild-card-link" data-i18n="dash.manage_settings">Hallitse asetukset →</a>
                         {% else %}
-                        <a href="{{ g.invite_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary guild-card-invite">Kutsu botti palvelimelle</a>
+                        <a href="{{ g.invite_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary guild-card-invite" data-i18n="dash.invite_bot">Kutsu botti palvelimelle</a>
                         {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
             {% if not guilds and not error %}
-            <p class="empty">Ei palvelimia. Sinulla pitää olla ylläpito-oikeudet vähintään yhdellä palvelimella.</p>
+            <p class="empty" data-i18n="dash.no_servers">Ei palvelimia. Sinulla pitää olla ylläpito-oikeudet vähintään yhdellä palvelimella.</p>
             {% endif %}
         </section>
-        <footer class="site-footer">© <span id="year"></span> S44Gaming. Kaikki oikeudet pidätetään.</footer>
+        <footer class="site-footer">© <span id="year"></span> <span data-i18n="dash.footer">S44Gaming. Kaikki oikeudet pidätetään.</span></footer>
     </main>
     <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+    <script>
+        function updateThemeBtn() {
+            var btn = document.getElementById('theme-toggle');
+            if (btn && window.XevrionI18n) btn.textContent = document.body.classList.contains('light-theme') ? XevrionI18n.t('nav.theme_light') : XevrionI18n.t('nav.theme_dark');
+        }
+        window.addEventListener('langchange', updateThemeBtn);
+        updateThemeBtn();
+    </script>
     <script>
         (function() {
             var key = 'xevrion-theme';
@@ -64,12 +74,12 @@
             if (saved === 'light') document.body.classList.add('light-theme');
             var btn = document.getElementById('theme-toggle');
             if (btn) {
-                btn.textContent = document.body.classList.contains('light-theme') ? '☀️ Vaalea' : '🌙 Tumma';
+                updateThemeBtn();
                 btn.onclick = function() {
                     document.body.classList.toggle('light-theme');
                     var isLight = document.body.classList.contains('light-theme');
                     localStorage.setItem(key, isLight ? 'light' : 'dark');
-                    btn.textContent = isLight ? '☀️ Vaalea' : '🌙 Tumma';
+                    updateThemeBtn();
                 };
             }
         })();

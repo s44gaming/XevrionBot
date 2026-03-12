@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xevrion – {{ guild.name }}</title>
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,13 +14,14 @@
     <header class="header">
         <a href="/dashboard" class="brand">Xevrion</a>
         <nav class="nav">
+            <div id="lang-container"></div>
             <span class="user-badge">{{ user.username }}</span>
-            <a href="/logout" class="btn btn-ghost">Kirjaudu ulos</a>
+            <a href="/logout" class="btn btn-ghost" data-i18n="nav.logout">Kirjaudu ulos</a>
         </nav>
     </header>
     <main class="main">
         <section class="section">
-            <a href="/dashboard" class="back-link">&larr; Takaisin palvelimiin</a>
+            <a href="/dashboard" class="back-link" data-i18n="nav.back_servers">&larr; Takaisin palvelimiin</a>
             <div class="guild-header">
                 <div class="guild-icon large">
                     {% if guild.icon %}
@@ -30,25 +32,25 @@
                 </div>
                 <div>
                     <h1>{{ guild.name }}</h1>
-                    <p class="muted">Ominaisuuksien hallinta – muutokset astuvat voimaan heti</p>
+                    <p class="muted" data-i18n="gs.features_desc">Ominaisuuksien hallinta – muutokset astuvat voimaan heti</p>
                 </div>
             </div>
 
-            <nav class="settings-nav" aria-label="Asetusosiot">
-                <a href="#yleinen">Yleinen</a>
-                <a href="#moderaatio">Moderaatio</a>
-                <a href="#viestit">Jäsenviestit</a>
-                <a href="#tiketti">Tiketti</a>
-                <a href="#taso">Tasot</a>
-                <a href="#integraatiot">Integraatiot</a>
+            <nav class="settings-nav" aria-label="Asetusosiot" data-i18n-aria="sect.settings_nav">
+                <a href="#yleinen" data-i18n="sect.general">Yleinen</a>
+                <a href="#moderaatio" data-i18n="sect.moderation">Moderaatio</a>
+                <a href="#viestit" data-i18n="sect.messages">Jäsenviestit</a>
+                <a href="#tiketti" data-i18n="sect.ticket">Tiketti</a>
+                <a href="#taso" data-i18n="sect.levels">Tasot</a>
+                <a href="#integraatiot" data-i18n="sect.integrations">Integraatiot</a>
             </nav>
 
             <section id="yleinen" class="settings-section">
-                <h2 class="section-heading">Yleinen</h2>
+                <h2 class="section-heading" data-i18n="sect.general">Yleinen</h2>
             <div class="settings-grid">
             <div class="settings-card">
-                <h2>Komennot</h2>
-                <p class="card-desc">Valitse mitkä komennot ovat käytettävissä.</p>
+                <h2 data-i18n="gs.commands">Komennot</h2>
+                <p class="card-desc" data-i18n="gs.commands_desc">Valitse mitkä komennot ovat käytettävissä.</p>
                 <div class="features-list features-list-cols">
                 {% for f in features %}
                 <div class="feature-row" data-feature="{{ f.key }}">
@@ -68,12 +70,12 @@
             </section>
 
             <section id="moderaatio" class="settings-section">
-                <h2 class="section-heading">Moderaatio</h2>
+                <h2 class="section-heading" data-i18n="sect.moderation">Moderaatio</h2>
             <div class="settings-grid settings-grid-2">
             <div class="settings-card">
-                <h2>Moderaatio</h2>
-                <p class="card-desc">Moderaattoriroolit ja toiminnot (kick, ban, mute jne.).</p>
-                <h3 class="panel-title">Moderaattoriroolit</h3>
+                <h2 data-i18n="gs.moderation">Moderaatio</h2>
+                <p class="card-desc" data-i18n="gs.mod_desc">Moderaattoriroolit ja toiminnot (kick, ban, mute jne.).</p>
+                <h3 class="panel-title" data-i18n="gs.mod_roles">Moderaattoriroolit</h3>
                 {% if roles %}
                 <div class="role-grid" id="role-grid">
                     {% for role in roles %}
@@ -86,7 +88,7 @@
                 {% else %}
                 <p class="empty">Roolit eivät ole saatavilla.</p>
                 {% endif %}
-                <h3 class="panel-title" style="margin-top: 1rem;">Moderaatiotoiminnot</h3>
+                <h3 class="panel-title" style="margin-top: 1rem;" data-i18n="gs.mod_actions">Moderaatiotoiminnot</h3>
                 <div class="features-list">
                     {% for f in mod_features %}
                     <div class="feature-row">
@@ -105,10 +107,10 @@
 
             <!-- Moderaatio-lokit -->
             <div class="settings-card">
-                <h2>Moderaatio-lokit</h2>
-                <p class="card-desc">Logikanava ja mitkä logit ovat käytössä.</p>
+                <h2 data-i18n="gs.mod_logs">Moderaatio-lokit</h2>
+                <p class="card-desc" data-i18n="gs.mod_logs_desc">Logikanava ja mitkä logit ovat käytössä.</p>
                 <div class="ticket-row">
-                    <label>Logikanava</label>
+                    <label data-i18n="gs.log_channel">Logikanava</label>
                     <select id="log-channel" class="channel-select">
                         <option value="">– Ei kanavaa –</option>
                         {% for ch in channels %}
@@ -956,7 +958,7 @@
             });
         }
     </script>
-    <footer class="site-footer">© <span id="year"></span> S44Gaming. Kaikki oikeudet pidätetään.</footer>
+    <footer class="site-footer">© <span id="year"></span> <span data-i18n="dash.footer">S44Gaming. Kaikki oikeudet pidätetään.</span></footer>
     <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
     <script>if (localStorage.getItem('xevrion-theme') === 'light') document.body.classList.add('light-theme');</script>
 </body>

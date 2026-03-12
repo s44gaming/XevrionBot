@@ -4,49 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xevrion – Hallinta</title>
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div style="position:absolute;top:1rem;right:1rem;z-index:100;" id="lang-container"></div>
     <main class="landing">
         <div class="landing-content">
             <div class="logo-mark">
                 <img src="{{ url_for('static', filename='imag/profile.png') }}" alt="Bolt-logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
             </div>
             <h1>Xevrion</h1>
-            <p class="tagline">Xevrion-botin hallinta. Kirjaudu Discord-tilillä – näet vain ne palvelimet, joissa sinulla on ylläpito.</p>
+            <p class="tagline" data-i18n="index.tagline">Xevrion-botin hallinta. Kirjaudu Discord-tilillä – näet vain ne palvelimet, joissa sinulla on ylläpito.</p>
             <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-top: 1rem;">
                 <a href="/login" class="btn btn-primary">
-                    <span>Kirjaudu Discordilla</span>
+                    <span data-i18n="index.login">Kirjaudu Discordilla</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </a>
-                <a href="/invite" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">
+                <a href="/invite" class="btn btn-ghost" target="_blank" rel="noopener noreferrer" data-i18n="index.invite">
                     Kutsu botti palvelimelle
                 </a>
             </div>
 
             <div style="margin-top: 2.5rem; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
-                <p class="muted" style="font-size: 0.9rem; line-height: 1.7;">
+                <p class="muted" style="font-size: 0.9rem; line-height: 1.7;" data-i18n="index.desc1">
                     Xevrion toimii usealla palvelimella kerralla. Kullakin palvelimella voit päättää itse, mitkä komennot ja lokit ovat käytössä, kuka saa käyttää moderaatiotoimia ja miten tervetuloviestit tai tasojärjestelmä toimii. Kaikki säätö tapahtuu tästä webistä – ei tarvitse koskea koodiin. Botti toimii avoimella lähdekoodilla, koodi on saatavilla GitHubissa.
                 </p>
-                <p class="muted" style="font-size: 0.9rem; line-height: 1.7; margin-top: 1rem;">
+                <p class="muted" style="font-size: 0.9rem; line-height: 1.7; margin-top: 1rem;" data-i18n="index.desc2">
                     Jos tarvitset apua tai haluat ehdottaa parannuksia, liity S44Gaming Squad -Discordiin ja käytä tukikanavaa.
                 </p>
                 <div class="footer-links">
-                    <a href="https://github.com/s44gaming/Discord-Botti" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+                    <a href="https://github.com/s44gaming/Discord-Botti" target="_blank" rel="noopener noreferrer" class="btn btn-ghost" data-i18n="index.github">
                         GitHub – lähdekoodi
                     </a>
-                    <a href="https://discord.gg/ujB4JHfgcg" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+                    <a href="https://discord.gg/ujB4JHfgcg" target="_blank" rel="noopener noreferrer" class="btn btn-ghost" data-i18n="index.discord">
                         Discord – tuki
                     </a>
 
-                    </div>
+
+
                 </div>
             </div>
         </div>
-
+    </main>
 </body>
 <!-- Tekijänoikeudet S44Gaming kaikki oikeudet pidätetään. https://discord.gg/ujB4JHfgcg -->
 </html>

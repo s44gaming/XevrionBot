@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kehittäjäportaali – Xevrion</title>
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,15 +57,16 @@
     <header class="header">
         <a href="/dashboard" class="brand">Xevrion</a>
         <nav class="nav">
-            <a href="/dashboard" class="btn btn-ghost">&larr; Dashboard</a>
-            <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle" title="Vaihda teema">🌙 Tumma</button>
+            <div id="lang-container"></div>
+            <a href="/dashboard" class="btn btn-ghost" data-i18n="nav.back_dashboard">&larr; Dashboard</a>
+            <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle" title="">🌙 Tumma</button>
             <span class="user-badge">{{ user.username }}</span>
-            <a href="/logout" class="btn btn-ghost">Kirjaudu ulos</a>
+            <a href="/logout" class="btn btn-ghost" data-i18n="nav.logout">Kirjaudu ulos</a>
         </nav>
     </header>
     <main class="main" style="max-width: 960px;">
         <section class="section">
-            <a href="/dashboard" class="back-link">&larr; Takaisin dashboardiin</a>
+            <a href="/dashboard" class="back-link" data-i18n="nav.back_dashboard">&larr; Takaisin dashboardiin</a>
             <h1>Kehittäjäportaali</h1>
             <p class="muted">Bottin tilat, järjestelmä, palvelimet, konsoliloki ja hallinta</p>
 
@@ -196,9 +198,17 @@
                 <div class="console-box" id="console"></div>
             </div>
         </section>
-        <footer class="site-footer">© <span id="year"></span> S44Gaming. Kaikki oikeudet pidätetään.</footer>
+        <footer class="site-footer">© <span id="year"></span> <span data-i18n="dash.footer">S44Gaming. Kaikki oikeudet pidätetään.</span></footer>
     </main>
     <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+    <script>
+        function devUpdateThemeBtn() {
+            var btn = document.getElementById('theme-toggle');
+            if (btn && window.XevrionI18n) btn.textContent = document.body.classList.contains('light-theme') ? XevrionI18n.t('nav.theme_light') : XevrionI18n.t('nav.theme_dark');
+        }
+        window.addEventListener('langchange', devUpdateThemeBtn);
+        devUpdateThemeBtn();
+    </script>
     <script>
         const fmtTime = (s) => {
             if (s == null) return '–';
@@ -352,9 +362,8 @@
             document.body.classList.toggle('light-theme');
             const isLight = document.body.classList.contains('light-theme');
             localStorage.setItem('dev-portal-theme', isLight ? 'light' : 'dark');
-            document.getElementById('theme-toggle').textContent = isLight ? '☀️ Vaalea' : '🌙 Tumma';
+            devUpdateThemeBtn();
         };
-        document.getElementById('theme-toggle').textContent = document.body.classList.contains('light-theme') ? '☀️ Vaalea' : '🌙 Tumma';
         document.getElementById('btn-console-copy').onclick = () => {
             const box = document.getElementById('console');
             navigator.clipboard.writeText(box.innerText).then(() => alert('Kopioitu leikepöydälle'));
