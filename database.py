@@ -250,13 +250,35 @@ def get_user_warns(guild_id: str, user_id: str) -> list[dict]:
 
 
 def get_ticket_settings(guild_id: str) -> dict:
-    """Palauttaa tiketti-asetukset: staff_role_id, category_id, channel_id."""
+    """Palauttaa tiketti-asetukset: staff_role_id, category_id, channel_id, transcript_channel_id, ticket_topics, panel_title, panel_description."""
     settings = get_guild_settings(guild_id)
+    topics = settings.get("ticket_topics") or []
+    if not isinstance(topics, list):
+        topics = []
     return {
         "staff_role_id": settings.get("ticket_staff_role_id"),
         "category_id": settings.get("ticket_category_id"),
         "channel_id": settings.get("ticket_channel_id"),
+        "transcript_channel_id": settings.get("ticket_transcript_channel_id"),
+        "ticket_topics": [{"label": str(t.get("label", ""))[:100], "description": str(t.get("description", ""))[:100], "emoji": str(t.get("emoji", ""))[:10], "role_id": str(t.get("role_id", "")).strip() or None} for t in topics if isinstance(t, dict) and t.get("label")],
+        "panel_title": (settings.get("ticket_panel_title") or "Tukitiketti").strip()[:256],
+        "panel_description": (settings.get("ticket_panel_description") or "Valitse tiketin aihe alta.").strip()[:1000],
     }
+
+
+def set_ticket_topics(guild_id: str, topics: list, panel_title: str | None = None, panel_description: str | None = None) -> None:
+    """Asettaa tikettiaiheet ja valinnaisesti paneelin otsikon ja kuvauksen."""
+    s = get_guild_settings(guild_id)
+    if topics is not None:
+        s["ticket_topics"] = [
+            {"label": str(t.get("label", ""))[:100], "description": str(t.get("description", ""))[:100], "emoji": str(t.get("emoji", ""))[:10], "role_id": str(t.get("role_id", "")).strip() or None}
+            for t in topics if isinstance(t, dict) and t.get("label")
+        ]
+    if panel_title is not None:
+        s["ticket_panel_title"] = str(panel_title).strip()[:256] if panel_title else "Tukitiketti"
+    if panel_description is not None:
+        s["ticket_panel_description"] = str(panel_description).strip()[:1000] if panel_description else "Valitse tiketin aihe alta."
+    set_guild_settings(guild_id, s)
 
 
 def get_welcome_settings(guild_id: str) -> dict:
@@ -411,7 +433,7 @@ def set_starboard_settings(guild_id: str, channel_id: str | None = None, min_sta
     set_guild_settings(guild_id, s)
 
 
-def set_ticket_settings(guild_id: str, staff_role_id: str | None = None, category_id: str | None = None, channel_id: str | None = None) -> None:
+def set_ticket_settings(guild_id: str, staff_role_id: str | None = None, category_id: str | None = None, channel_id: str | None = None, transcript_channel_id: str | None = None) -> None:
     s = get_guild_settings(guild_id)
     if staff_role_id is not None:
         if staff_role_id:
@@ -428,6 +450,11 @@ def set_ticket_settings(guild_id: str, staff_role_id: str | None = None, categor
             s["ticket_channel_id"] = str(channel_id)
         else:
             s.pop("ticket_channel_id", None)
+    if transcript_channel_id is not None:
+        if transcript_channel_id:
+            s["ticket_transcript_channel_id"] = str(transcript_channel_id)
+        else:
+            s.pop("ticket_transcript_channel_id", None)
     set_guild_settings(guild_id, s)
 
 

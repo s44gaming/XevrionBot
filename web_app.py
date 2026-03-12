@@ -43,30 +43,31 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost")
 BOT_TOKEN = os.getenv("DISCORD_TOKEN")
 
 # Komennot – kukin voi kytkeä päälle/pois webissä
+# Järjestys: 3 saraketta – Ping|Info|Hallinta, Kutsuviesti|Taso|Kolikko, 8-pallo|Arvaa luku|Ruletti, Twitch|AFK|Muistutus jne.
 COMMAND_FEATURES = [
     ("ping", "Ping", "/ping – vastausajan tarkistus"),
-    ("komennot_lista", "Komennot", "/komennot – näytä kaikki komennot (päivittyy automaattisesti)"),
     ("info", "Info", "/info – palvelimen tiedot"),
-    ("tervehdys", "Tervehdys", "/tervehdys – tervehdys"),
     ("hallinta", "Hallinta", "/hallinta – linkki web-hallintaan"),
-    ("kutsu", "Kutsu", "/kutsu – linkki lisätä botti palvelimelle (Apply bot)"),
     ("kutsuviesti", "Kutsuviesti", "/lähetäkutsu – lähettää yhteisön kutsulinkin kanavalle"),
-    ("tiketti", "Tiketti", "Tikettijärjestelmä ja /tiketti_paneeli"),
     ("taso", "Taso", "/taso – näytä taso ja XP"),
-    ("tasonboard", "Tasonboard", "/tasonboard – tasoTOP-10"),
     ("kolikko", "Kolikko", "/kolikko – heitä kolikkoa (kruuna/klaava)"),
-    ("noppa", "Noppa", "/noppa – heitä noppaa (esim. 1d6, 2d20)"),
     ("8ball", "8-pallo", "/8ball – maaginen 8-pallo"),
-    ("kps", "Kivi-paperi-sakset", "/kps – pelaa bottia vastaan"),
     ("arvaa", "Arvaa luku", "/arvaa_luku – arvaa luku 1–10"),
-    ("arpa", "Arpa", "/arpa – arpa valitsee vaihtoehdoista"),
     ("ruletti", "Ruletti", "/ruletti – venäläinen ruletti (1/6)"),
-    ("fivem", "FiveM", "/fivem – FiveM-palvelimen tila (asetukset webistä)"),
     ("twitch", "Twitch", "Ilmoitukset uusista streameistä (lisää seuraajat webistä)"),
-    ("ehdotus", "Ehdotus", "/ehdotus – lähetä ehdotus kanavalle"),
     ("afk", "AFK", "/afk – aseta AFK-tila (vastaus kun mainitaan)"),
-    ("arvonta", "Arvonta", "/arvonta – arvo voittajat viestistä (mod)"),
     ("muistutus", "Muistutus", "/muistutus – aseta muistutus"),
+    ("komennot_lista", "Komennot", "/komennot – näytä kaikki komennot (päivittyy automaattisesti)"),
+    ("tervehdys", "Tervehdys", "/tervehdys – tervehdys"),
+    ("kutsu", "Kutsu", "/kutsu – linkki lisätä botti palvelimelle (Apply bot)"),
+    ("tiketti", "Tiketti", "Tikettijärjestelmä ja /tiketti_paneeli"),
+    ("tasonboard", "Tasonboard", "/tasonboard – tasoTOP-10"),
+    ("noppa", "Noppa", "/noppa – heitä noppaa (esim. 1d6, 2d20)"),
+    ("kps", "Kivi-paperi-sakset", "/kps – pelaa bottia vastaan"),
+    ("arpa", "Arpa", "/arpa – arpa valitsee vaihtoehdoista"),
+    ("fivem", "FiveM", "/fivem – FiveM-palvelimen tila (asetukset webistä)"),
+    ("ehdotus", "Ehdotus", "/ehdotus – lähetä ehdotus kanavalle"),
+    ("arvonta", "Arvonta", "/arvonta – arvo voittajat viestistä (mod)"),
 ]
 
 MOD_FEATURES = [
@@ -690,9 +691,14 @@ def guild_settings(guild_id):
     categories = [{"id": c["id"], "name": c["name"]} for c in get_guild_categories(guild_id)]
     roles = [{"id": r["id"], "name": r["name"]} for r in get_guild_roles(guild_id)]
     mod_roles = settings.get("mod_roles", [])
-    ticket_staff_role = settings.get("ticket_staff_role_id")
-    ticket_category = settings.get("ticket_category_id")
-    ticket_channel = settings.get("ticket_channel_id")
+    ticket_settings = database.get_ticket_settings(guild_id)
+    ticket_staff_role = ticket_settings.get("staff_role_id")
+    ticket_category = ticket_settings.get("category_id")
+    ticket_channel = ticket_settings.get("channel_id")
+    ticket_transcript_channel = ticket_settings.get("transcript_channel_id")
+    ticket_topics = ticket_settings.get("ticket_topics") or []
+    ticket_panel_title = ticket_settings.get("panel_title") or "Tukitiketti"
+    ticket_panel_description = ticket_settings.get("panel_description") or "Valitse tiketin aihe alta."
     mod_features = [{
         "key": k,
         "label": l,
@@ -760,6 +766,10 @@ def guild_settings(guild_id):
         ticket_staff_role=ticket_staff_role,
         ticket_category=ticket_category,
         ticket_channel=ticket_channel,
+        ticket_transcript_channel=ticket_transcript_channel,
+        ticket_topics=ticket_topics,
+        ticket_panel_title=ticket_panel_title,
+        ticket_panel_description=ticket_panel_description,
         welcome_enabled=welcome_enabled,
         welcome_channel=welcome_channel,
         level_enabled=level_enabled,
@@ -1095,7 +1105,25 @@ def api_set_ticket_settings(guild_id):
     staff_role = data.get("staff_role_id") or ""
     category = data.get("category_id") or ""
     channel = data.get("channel_id") or ""
-    database.set_ticket_settings(guild_id, staff_role_id=staff_role, category_id=category, channel_id=channel)
+    transcript_channel = data.get("transcript_channel_id") or ""
+    database.set_ticket_settings(guild_id, staff_role_id=staff_role, category_id=category, channel_id=channel, transcript_channel_id=transcript_channel)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/ticket/topics", methods=["POST"])
+@login_required
+def api_set_ticket_topics(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    topics = data.get("topics", [])
+    if not isinstance(topics, list):
+        topics = []
+    topics = [{"label": str(t.get("label", ""))[:100], "description": str(t.get("description", ""))[:100], "emoji": str(t.get("emoji", ""))[:10], "role_id": str(t.get("role_id", "")).strip() or None} for t in topics if isinstance(t, dict) and t.get("label")]
+    panel_title = data.get("panel_title")
+    panel_description = data.get("panel_description")
+    database.set_ticket_topics(guild_id, topics=topics, panel_title=panel_title, panel_description=panel_description)
     return jsonify({"success": True})
 
 
