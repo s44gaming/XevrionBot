@@ -7,20 +7,20 @@ class InfoCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="info", description="Näytä palvelimen tiedot")
+    @app_commands.command(name="info", description="Show server info")
     async def info(self, interaction: discord.Interaction):
         enabled = await self.bot.is_feature_enabled(interaction.guild_id, "info")
         if not enabled:
             await interaction.response.send_message(
-                "⚠️ Tämä komento on poistettu käytöstä tällä palvelimella.",
+                "⚠️ This command is disabled on this server.",
                 ephemeral=True
             )
             return
         guild = interaction.guild
         embed = discord.Embed(title=guild.name, color=discord.Color.blue())
-        embed.add_field(name="Jäseniä", value=str(guild.member_count), inline=True)
-        embed.add_field(name="Kanavia", value=str(len(guild.channels)), inline=True)
-        embed.add_field(name="Luotu", value=guild.created_at.strftime("%d.%m.%Y"), inline=True)
+        embed.add_field(name="Members", value=str(guild.member_count), inline=True)
+        embed.add_field(name="Channels", value=str(len(guild.channels)), inline=True)
+        embed.add_field(name="Created", value=guild.created_at.strftime("%d.%m.%Y"), inline=True)
         await interaction.response.send_message(embed=embed)
 
 

@@ -25,7 +25,7 @@ class TicketTopicSelect(discord.ui.Select):
             topics = []
         options = []
         for i, t in enumerate((topics or [])[:25]):  # Discord max 25
-            label = (t.get("label") or "Tiketti")[:100]
+            label = (t.get("label") or "Ticket")[:100]
             desc = (t.get("description") or "")[:100]
             emoji = (t.get("emoji") or "").strip()
             opt = discord.SelectOption(label=label, value=str(i), description=desc or None)
@@ -36,10 +36,10 @@ class TicketTopicSelect(discord.ui.Select):
                     pass
             options.append(opt)
         if not options:
-            options = [discord.SelectOption(label="Tiketti", value="0", description="Avaa tiketti")]
+            options = [discord.SelectOption(label="Ticket", value="0", description="Open ticket")]
         super().__init__(
             custom_id="ticket_topic_select",
-            placeholder="Valitse tiketin aihe",
+            placeholder="Select topic",
             min_values=1,
             max_values=1,
             options=options,
@@ -50,11 +50,11 @@ class TicketTopicSelect(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         if not interaction.guild or not isinstance(interaction.user, discord.Member):
             return await interaction.response.send_message(
-                "Tikettejä voi avata vain palvelimella.", ephemeral=True
+                "Tickets can only be opened in a server.", ephemeral=True
             )
         if not await self.bot.is_feature_enabled(interaction.guild_id, "tiketti"):
             return await interaction.response.send_message(
-                "Tikettijärjestelmä on poissa käytöstä.", ephemeral=True
+                "Ticket system is disabled.", ephemeral=True
             )
         settings = self.bot.get_ticket_settings(interaction.guild_id)
         ch_id = settings.get("channel_id")
@@ -62,24 +62,24 @@ class TicketTopicSelect(discord.ui.Select):
         role_id = settings.get("staff_role_id")
         if not ch_id or not cat_id or not role_id:
             return await interaction.response.send_message(
-                "Tiketti-asetukset puuttuvat. Aseta web-dashboardista rooli, kategoria ja kanava.",
+                "Ticket settings missing. Set staff role, category and channel in web dashboard.",
                 ephemeral=True
             )
         if str(interaction.channel_id) != str(ch_id):
             return await interaction.response.send_message(
-                f"Avaa tiketti kanavalla <#{ch_id}>.", ephemeral=True
+                f"Open ticket in channel <#{ch_id}>.", ephemeral=True
             )
 
         topics = settings.get("ticket_topics") or self._topics
         if not topics:
             return await interaction.response.send_message(
-                "Tiketin aiheita ei ole määritelty. Lisää aiheet web-dashboardista.", ephemeral=True
+                "No ticket topics configured. Add topics in web dashboard.", ephemeral=True
             )
         idx = int(self.values[0])
         if idx < 0 or idx >= len(topics):
-            return await interaction.response.send_message("Virheellinen valinta.", ephemeral=True)
+            return await interaction.response.send_message("Invalid choice.", ephemeral=True)
         topic = topics[idx]
-        topic_label = topic.get("label") or "Tiketti"
+        topic_label = topic.get("label") or "Ticket"
         topic_desc = topic.get("description") or ""
 
         await interaction.response.defer(ephemeral=True)
@@ -87,12 +87,12 @@ class TicketTopicSelect(discord.ui.Select):
         category = interaction.guild.get_channel(int(cat_id))
         if not category or not isinstance(category, discord.CategoryChannel):
             return await interaction.followup.send(
-                "Tiketin kategoriaa ei löydy.", ephemeral=True
+                "Ticket category not found.", ephemeral=True
             )
         staff_role = interaction.guild.get_role(int(role_id))
         if not staff_role:
             return await interaction.followup.send(
-                "Staff-roolia ei löydy.", ephemeral=True
+                "Staff role not found.", ephemeral=True
             )
 
         safe_name = _slug(interaction.user.display_name, 12) or "user"
@@ -116,16 +116,16 @@ class TicketTopicSelect(discord.ui.Select):
                 overwrites=overwrites,
             )
         except discord.Forbidden:
-            return await interaction.followup.send("Ei oikeuksia luoda kanavia.", ephemeral=True)
+            return await interaction.followup.send("No permission to create channels.", ephemeral=True)
 
         embed = discord.Embed(
-            title="Tiketti avattu",
-            description=f"Tervetuloa {interaction.user.mention}!\n\n**Aihe:** {topic_label}\n{topic_desc}\n\nKuvatko ongelma tai kysymyksesi alle. Staff vastaa pian.",
+            title="Ticket opened",
+            description=f"Welcome {interaction.user.mention}!\n\n**Topic:** {topic_label}\n{topic_desc}\n\nDescribe your issue or question below. Staff will respond soon.",
             color=discord.Color.green(),
         )
         close_view = TicketCloseView(self.bot)
         await channel.send(content=interaction.user.mention, embed=embed, view=close_view)
-        await interaction.followup.send(f"Tiketti avattu: {channel.mention}", ephemeral=True)
+        await interaction.followup.send(f"Ticket opened: {channel.mention}", ephemeral=True)
         # Päivitä paneeli uudella näkymällä jotta valinta ei jää aktiiviseksi
         try:
             fresh_view = TicketOpenView(self.bot, guild_id=interaction.guild_id)
@@ -136,17 +136,17 @@ class TicketTopicSelect(discord.ui.Select):
 
 class TicketOpenButton(discord.ui.Button):
     def __init__(self, bot):
-        super().__init__(style=discord.ButtonStyle.primary, label="Avaa tiketti", custom_id="ticket_open")
+        super().__init__(style=discord.ButtonStyle.primary, label="Open ticket", custom_id="ticket_open")
         self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
         if not interaction.guild or not isinstance(interaction.user, discord.Member):
             return await interaction.response.send_message(
-                "Tikettejä voi avata vain palvelimella.", ephemeral=True
+                "Tickets can only be opened in a server.", ephemeral=True
             )
         if not await self.bot.is_feature_enabled(interaction.guild_id, "tiketti"):
             return await interaction.response.send_message(
-                "Tikettijärjestelmä on poissa käytöstä.", ephemeral=True
+                "Ticket system is disabled.", ephemeral=True
             )
         settings = self.bot.get_ticket_settings(interaction.guild_id)
         ch_id = settings.get("channel_id")
@@ -154,13 +154,13 @@ class TicketOpenButton(discord.ui.Button):
         role_id = settings.get("staff_role_id")
         if not ch_id or not cat_id or not role_id:
             return await interaction.response.send_message(
-                "Tiketti-asetukset puuttuvat. Aseta web-dashboardista rooli, kategoria ja kanava.",
+                "Ticket settings missing. Set staff role, category and channel in web dashboard.",
                 ephemeral=True
             )
         ch_str = str(ch_id)
         if str(interaction.channel_id) != ch_str:
             return await interaction.response.send_message(
-                f"Avaa tiketti kanavalla <#{ch_str}>.", ephemeral=True
+                f"Open ticket in channel <#{ch_str}>.", ephemeral=True
             )
 
         await interaction.response.defer(ephemeral=True)
@@ -168,13 +168,13 @@ class TicketOpenButton(discord.ui.Button):
         category = interaction.guild.get_channel(int(cat_id))
         if not category or not isinstance(category, discord.CategoryChannel):
             return await interaction.followup.send(
-                "Tiketin kategoriaa ei löydy.", ephemeral=True
+                "Ticket category not found.", ephemeral=True
             )
 
         staff_role = interaction.guild.get_role(int(role_id))
         if not staff_role:
             return await interaction.followup.send(
-                "Staff-roolia ei löydy.", ephemeral=True
+                "Staff role not found.", ephemeral=True
             )
 
         safe_name = "".join(c if c.isalnum() or c in "-_" else "" for c in interaction.user.display_name)[:12] or "user"
@@ -193,16 +193,16 @@ class TicketOpenButton(discord.ui.Button):
                 overwrites=overwrites,
             )
         except discord.Forbidden:
-            return await interaction.followup.send("Ei oikeuksia luoda kanavia.", ephemeral=True)
+            return await interaction.followup.send("No permission to create channels.", ephemeral=True)
 
         embed = discord.Embed(
-            title="Tiketti avattu",
-            description=f"Tervetuloa {interaction.user.mention}! Kuvatko ongelma tai kysymyksesi alle.\nStaff vastaa pian.",
+            title="Ticket opened",
+            description=f"Welcome {interaction.user.mention}! Describe your issue or question below.\nStaff will respond soon.",
             color=discord.Color.green(),
         )
         close_view = TicketCloseView(self.bot)
         await channel.send(content=interaction.user.mention, embed=embed, view=close_view)
-        await interaction.followup.send(f"Tiketti avattu: {channel.mention}", ephemeral=True)
+        await interaction.followup.send(f"Ticket opened: {channel.mention}", ephemeral=True)
 
 
 class TicketOpenView(discord.ui.View):
@@ -233,7 +233,7 @@ def _format_msg(msg: discord.Message) -> str:
 
 class TicketCloseButton(discord.ui.Button):
     def __init__(self, bot):
-        super().__init__(style=discord.ButtonStyle.danger, label="Sulje tiketti", custom_id="ticket_close")
+        super().__init__(style=discord.ButtonStyle.danger, label="Close ticket", custom_id="ticket_close")
         self.bot = bot
 
     async def callback(self, interaction: discord.Interaction):
@@ -242,13 +242,13 @@ class TicketCloseButton(discord.ui.Button):
         settings = self.bot.get_ticket_settings(interaction.guild_id)
         role_id = settings.get("staff_role_id")
         if not role_id:
-            return await interaction.response.send_message("Staff-roolia ei määritetty.", ephemeral=True)
+            return await interaction.response.send_message("Staff role not configured.", ephemeral=True)
         staff_role = interaction.guild.get_role(int(role_id))
         if not staff_role or not isinstance(interaction.user, discord.Member):
-            return await interaction.response.send_message("Et voi sulkea tätä tiketin.", ephemeral=True)
+            return await interaction.response.send_message("You cannot close this ticket.", ephemeral=True)
         if staff_role not in interaction.user.roles and not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("Vain staff voi sulkea tiketin.", ephemeral=True)
-        await interaction.response.send_message("Tiketti suljetaan...", ephemeral=True)
+            return await interaction.response.send_message("Only staff can close the ticket.", ephemeral=True)
+        await interaction.response.send_message("Closing ticket...", ephemeral=True)
 
         transcript_ch_id = settings.get("transcript_channel_id")
         if transcript_ch_id:
@@ -288,21 +288,21 @@ class TikettiCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="tiketti_paneeli", description="Lähettää tiketti-paneelin webissä valitulle kanavalle")
+    @app_commands.command(name="ticket_panel", description="Send ticket panel to configured channel")
     async def ticket_panel(self, interaction: discord.Interaction):
         if not interaction.guild:
-            return await interaction.response.send_message("Vain palvelimella.", ephemeral=True)
+            return await interaction.response.send_message("Use in a server.", ephemeral=True)
         if not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("Vain ylläpitäjät voivat käyttää.", ephemeral=True)
+            return await interaction.response.send_message("Only admins can use this.", ephemeral=True)
         if not await self.bot.is_feature_enabled(interaction.guild_id, "tiketti"):
             return await interaction.response.send_message(
-                "Tikettijärjestelmä on poissa käytöstä (web-dashboard).", ephemeral=True
+                "Ticket system is disabled (web dashboard).", ephemeral=True
             )
         settings = self.bot.get_ticket_settings(interaction.guild_id)
         ch_id = settings.get("channel_id")
         if not ch_id or not settings.get("category_id") or not settings.get("staff_role_id"):
             return await interaction.response.send_message(
-                "Aseta web-dashboardista: staff-rooli, kategoria ja kanava.",
+                "Set staff role, category and channel in web dashboard.",
                 ephemeral=True
             )
 
@@ -310,12 +310,12 @@ class TikettiCog(commands.Cog):
             target_channel = await self.bot.fetch_channel(int(ch_id))
         except (discord.NotFound, discord.Forbidden):
             return await interaction.response.send_message(
-                "Tiketti-kanavaa ei löydy. Tarkista web-asetukset.",
+                "Ticket channel not found. Check web settings.",
                 ephemeral=True
             )
         if not isinstance(target_channel, discord.TextChannel):
             return await interaction.response.send_message(
-                "Valittu kanava ei ole tekstikanava.",
+                "Selected channel is not a text channel.",
                 ephemeral=True
             )
 
@@ -329,7 +329,7 @@ class TikettiCog(commands.Cog):
         view = TicketOpenView(self.bot, guild_id=interaction.guild_id)
         await target_channel.send(embed=embed, view=view)
         await interaction.response.send_message(
-            f"Tiketti-paneeli lähetetty kanavalle {target_channel.mention}.",
+            f"Ticket panel sent to {target_channel.mention}.",
             ephemeral=True
         )
 

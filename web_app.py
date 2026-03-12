@@ -43,48 +43,56 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost")
 BOT_TOKEN = os.getenv("DISCORD_TOKEN")
 
 # Komennot – kukin voi kytkeä päälle/pois webissä
-# Järjestys: 3 saraketta – Ping|Info|Hallinta, Kutsuviesti|Taso|Kolikko, 8-pallo|Arvaa luku|Ruletti, Twitch|AFK|Muistutus jne.
+# Huom: Discord-komennon nimi muutetaan VAIN commands/*.py -tiedostoissa @app_commands.command(name="...")
+# sekä komennot_lista.py COMMAND_TO_FEATURE -mappauksessa. Feature-avaimet (ping, taso, jne.) pysyvät tietokannassa.
 COMMAND_FEATURES = [
-    ("ping", "Ping", "/ping – vastausajan tarkistus"),
-    ("info", "Info", "/info – palvelimen tiedot"),
-    ("hallinta", "Hallinta", "/hallinta – linkki web-hallintaan"),
-    ("kutsuviesti", "Kutsuviesti", "/lähetäkutsu – lähettää yhteisön kutsulinkin kanavalle"),
-    ("taso", "Taso", "/taso – näytä taso ja XP"),
-    ("kolikko", "Kolikko", "/kolikko – heitä kolikkoa (kruuna/klaava)"),
-    ("8ball", "8-pallo", "/8ball – maaginen 8-pallo"),
-    ("arvaa", "Arvaa luku", "/arvaa_luku – arvaa luku 1–10"),
-    ("ruletti", "Ruletti", "/ruletti – venäläinen ruletti (1/6)"),
-    ("twitch", "Twitch", "Ilmoitukset uusista streameistä (lisää seuraajat webistä)"),
-    ("afk", "AFK", "/afk – aseta AFK-tila (vastaus kun mainitaan)"),
-    ("muistutus", "Muistutus", "/muistutus – aseta muistutus"),
-    ("komennot_lista", "Komennot", "/komennot – näytä kaikki komennot (päivittyy automaattisesti)"),
-    ("tervehdys", "Tervehdys", "/tervehdys – tervehdys"),
-    ("kutsu", "Kutsu", "/kutsu – linkki lisätä botti palvelimelle (Apply bot)"),
-    ("tiketti", "Tiketti", "Tikettijärjestelmä ja /tiketti_paneeli"),
-    ("tasonboard", "Tasonboard", "/tasonboard – tasoTOP-10"),
-    ("noppa", "Noppa", "/noppa – heitä noppaa (esim. 1d6, 2d20)"),
-    ("kps", "Kivi-paperi-sakset", "/kps – pelaa bottia vastaan"),
-    ("arpa", "Arpa", "/arpa – arpa valitsee vaihtoehdoista"),
-    ("fivem", "FiveM", "/fivem – FiveM-palvelimen tila (asetukset webistä)"),
-    ("ehdotus", "Ehdotus", "/ehdotus – lähetä ehdotus kanavalle"),
-    ("arvonta", "Arvonta", "/arvonta – arvo voittajat viestistä (mod)"),
+    ("ping", "Ping", "/ping – check response time"),
+    ("info", "Info", "/info – server info"),
+    ("avatar", "Avatar", "/avatar – show profile picture"),
+    ("userinfo", "Userinfo", "/userinfo – user details"),
+    ("reverse", "Reverse", "/reverse – reverse text"),
+    ("hallinta", "Admin", "/admin – link to web dashboard"),
+    ("kutsuviesti", "Send invite", "/sendinvite – create invite link"),
+    ("taso", "Level", "/level – show level and XP"),
+    ("kolikko", "Coinflip", "/coinflip – heads or tails"),
+    ("8ball", "8-ball", "/8ball – magic 8-ball"),
+    ("arvaa", "Guess", "/guess – guess number 1–10"),
+    ("ruletti", "Roulette", "/roulette – Russian roulette"),
+    ("twitch", "Twitch", "Stream notifications (add streamers in web)"),
+    ("afk", "AFK", "/afk – set AFK status"),
+    ("muistutus", "Reminder", "/reminder – set reminder"),
+    ("komennot_lista", "Commands", "/commands – list all commands"),
+    ("tervehdys", "Hello", "/hello – greet"),
+    ("kutsu", "Invite", "/invite – bot invite link"),
+    ("tiketti", "Ticket", "Ticket system + /ticket_panel"),
+    ("tasonboard", "Leaderboard", "/leaderboard – level top 10"),
+    ("noppa", "Dice", "/dice – roll dice (e.g. 1d6, 2d20)"),
+    ("kps", "RPS", "/rps – rock paper scissors"),
+    ("arpa", "Choose", "/choose – pick from options"),
+    ("fivem", "FiveM", "/fivem – FiveM server status"),
+    ("ehdotus", "Suggestion", "/suggestion – send suggestion"),
+    ("arvonta", "Giveaway", "/giveaway – pick winners (mod)"),
+    ("poll", "Poll", "/poll – create poll"),
 ]
 
 MOD_FEATURES = [
-    ("kick", "Kick", "Potkaise jäsen"),
-    ("ban", "Ban", "Estä jäsen"),
-    ("mute", "Mute", "Mykistä (timeout)"),
-    ("unmute", "Unmute", "Poista mykistys"),
-    ("warn", "Varoitus", "Varoitus/varoitukset/poisto"),
-    ("purge", "Clear", "/clear – poista viestejä"),
+    ("kick", "Kick", "Kick member"),
+    ("ban", "Ban", "Ban member"),
+    ("mute", "Mute", "Mute (timeout)"),
+    ("unmute", "Unmute", "Remove mute"),
+    ("warn", "Warning", "Warn/warnings/remove"),
+    ("purge", "Clear", "/clear – delete messages"),
+    ("slowmode", "Slowmode", "/slowmode – slow channel messaging"),
+    ("say", "Say", "/say – send message as bot"),
 ]
 
 LOG_FEATURES = [
-    ("mod_actions", "Moderaatiotoiminnot", "Kick/ban/mute/warn/clear -lokit"),
-    ("member_join", "Jäsen liittyy", "Lokita kun jäsen liittyy"),
-    ("member_leave", "Jäsen poistuu", "Lokita kun jäsen poistuu"),
-    ("message_delete", "Viestin poisto", "Lokita viestin poisto"),
-    ("message_edit", "Viestin muokkaus", "Lokita viestin muokkaus"),
+    ("mod_actions", "Moderation actions", "Log kick/ban/mute/warn/clear/slowmode/say"),
+    ("member_join", "Member join", "Log when member joins"),
+    ("member_leave", "Member leave", "Log when member leaves"),
+    ("message_delete", "Message delete", "Log message deletion"),
+    ("message_edit", "Message edit", "Log message edit"),
+    ("voice_state", "Voice channel", "Log join/leave voice channels"),
 ]
 
 
@@ -737,6 +745,9 @@ def guild_settings(guild_id):
     goodbye_channel = settings.get("goodbye_channel_id")
     starboard_channel = settings.get("starboard_channel_id")
     starboard_min_stars = int(settings.get("starboard_min_stars", 3))
+    starboard_enabled = bool(settings.get("starboard_enabled", True))
+    reaction_roles_enabled = bool(settings.get("reaction_roles_enabled", False))
+    reaction_roles = settings.get("reaction_roles") or []
     # Ehdotus, AFK, Arvonta, Muistutus
     suggestion_enabled = bool(settings.get("suggestion_enabled", False))
     suggestion_channel = settings.get("suggestion_channel_id")
@@ -788,6 +799,9 @@ def guild_settings(guild_id):
         goodbye_channel=goodbye_channel,
         starboard_channel=starboard_channel,
         starboard_min_stars=starboard_min_stars,
+        starboard_enabled=starboard_enabled,
+        reaction_roles_enabled=reaction_roles_enabled,
+        reaction_roles=reaction_roles,
         suggestion_enabled=suggestion_enabled,
         suggestion_channel=suggestion_channel,
         afk_enabled=afk_enabled,
@@ -1087,11 +1101,36 @@ def api_set_starboard_settings(guild_id):
     if not any(g["id"] == guild_id for g in guilds):
         return jsonify({"error": "Ei oikeuksia"}), 403
     data = request.get_json() or {}
+    enabled = data.get("enabled") if "enabled" in data else None
     channel_id = data.get("channel_id")
     if channel_id is not None:
         channel_id = str(channel_id) if channel_id else None
     min_stars = data.get("min_stars")
-    database.set_starboard_settings(guild_id, channel_id=channel_id, min_stars=min_stars)
+    database.set_starboard_settings(guild_id, enabled=enabled, channel_id=channel_id, min_stars=min_stars)
+    return jsonify({"success": True})
+
+
+@app.route("/api/guild/<guild_id>/reaction-roles/settings", methods=["POST"])
+@login_required
+def api_set_reaction_roles_settings(guild_id):
+    guilds = get_user_guilds()
+    if not any(g["id"] == guild_id for g in guilds):
+        return jsonify({"error": "Ei oikeuksia"}), 403
+    data = request.get_json() or {}
+    enabled = data.get("enabled") if "enabled" in data else None
+    roles = data.get("roles", [])
+    if isinstance(roles, list):
+        roles = [
+            {
+                "message_id": str(r.get("message_id", "")).strip(),
+                "channel_id": str(r.get("channel_id", "")).strip(),
+                "emoji": str(r.get("emoji", ""))[:50],
+                "role_id": str(r.get("role_id", "")).strip(),
+            }
+            for r in roles
+            if r.get("message_id") and r.get("role_id")
+        ]
+    database.set_reaction_roles_settings(guild_id, enabled=enabled, roles=roles)
     return jsonify({"success": True})
 
 

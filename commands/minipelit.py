@@ -11,135 +11,135 @@ class MinipelitCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="kolikko", description="Heitä kolikkoa – kruuna vai klaava?")
-    async def kolikko(self, interaction: discord.Interaction):
+    @app_commands.command(name="coinflip", description="Flip a coin – heads or tails?")
+    async def coinflip(self, interaction: discord.Interaction):
         if not await self.bot.is_feature_enabled(interaction.guild_id, "kolikko"):
             await interaction.response.send_message(
-                "⚠️ Tämä minipeli on poistettu käytöstä. Ota se käyttöön web-dashboardista.", ephemeral=True
+                "⚠️ This minigame is disabled. Enable it in web dashboard.", ephemeral=True
             )
             return
-        tulos = random.choice(("🪙 **Kruuna!**", "🪙 **Klaava!**"))
+        tulos = random.choice(("🪙 **Heads!**", "🪙 **Tails!**"))
         await interaction.response.send_message(tulos)
 
-    @app_commands.command(name="noppa", description="Heitä noppaa (esim. 1d6, 2d20)")
-    @app_commands.describe(heitto="Esim. 1d6, 2d6, 1d20 (oletus 1d6)")
-    async def noppa(self, interaction: discord.Interaction, heitto: str = "1d6"):
+    @app_commands.command(name="dice", description="Roll dice (e.g. 1d6, 2d20)")
+    @app_commands.describe(roll="E.g. 1d6, 2d6, 1d20 (default 1d6)")
+    async def dice(self, interaction: discord.Interaction, roll: str = "1d6"):
         if not await self.bot.is_feature_enabled(interaction.guild_id, "noppa"):
             await interaction.response.send_message(
-                "⚠️ Tämä minipeli on poistettu käytöstä. Ota se käyttöön web-dashboardista.", ephemeral=True
+                "⚠️ This minigame is disabled. Enable it in web dashboard.", ephemeral=True
             )
             return
         try:
-            parts = heitto.lower().replace("d", " ").split()
+            parts = roll.lower().replace("d", " ").split()
             if len(parts) != 2:
-                raise ValueError("Käytä muotoa 1d6 tai 2d20")
+                raise ValueError("Use format 1d6 or 2d20")
             n, sivu = int(parts[0]), int(parts[1])
             if n < 1 or n > 10 or sivu < 2 or sivu > 100:
-                raise ValueError("Määrä 1–10, silmäluku 2–100")
+                raise ValueError("Count 1–10, sides 2–100")
             tulokset = [random.randint(1, sivu) for _ in range(n)]
             total = sum(tulokset)
             if n == 1:
-                msg = f"🎲 Noppa: **{tulokset[0]}** (d{sivu})"
+                msg = f"🎲 Dice: **{tulokset[0]}** (d{sivu})"
             else:
-                msg = f"🎲 Nopat: {tulokset} → yhteensä **{total}** ({n}d{sivu})"
+                msg = f"🎲 Dice: {tulokset} → total **{total}** ({n}d{sivu})"
             await interaction.response.send_message(msg)
         except (ValueError, IndexError):
             await interaction.response.send_message(
-                "Käytä muotoa esim. `1d6` tai `2d20`. Ensimmäinen luku = heittojen määrä, toinen = nopan sivu.",
+                "Use format e.g. `1d6` or `2d20`. First number = count, second = sides.",
                 ephemeral=True
             )
 
-    @app_commands.command(name="8ball", description="Maaginen 8-pallo vastaa kysymykseesi")
-    @app_commands.describe(kysymys="Kysy mitä tahansa")
-    async def ball8(self, interaction: discord.Interaction, kysymys: str):
+    @app_commands.command(name="8ball", description="Magic 8-ball answers your question")
+    @app_commands.describe(question="Ask anything")
+    async def ball8(self, interaction: discord.Interaction, question: str):
         if not await self.bot.is_feature_enabled(interaction.guild_id, "8ball"):
             await interaction.response.send_message(
-                "⚠️ Tämä minipeli on poistettu käytöstä. Ota se käyttöön web-dashboardista.", ephemeral=True
+                "⚠️ This minigame is disabled. Enable it in web dashboard.", ephemeral=True
             )
             return
-        vastaukset = [
-            "Joo, ehdottomasti!", "Kyllä!", "Näyttää siltä.", "Todennäköisesti.",
-            "En osaa sanoa.", "Kokeile myöhemmin.", "En nyt sano.",
-            "Ei näytä hyvältä.", "Ei.", "Ehdottomasti ei.", "Älä luota siihen."
+        answers = [
+            "Yes, definitely!", "Yes!", "Looks like it.", "Probably.",
+            "Can't say.", "Try again later.", "No comment.",
+            "Doesn't look good.", "No.", "Definitely not.", "Don't count on it."
         ]
-        vastaus = random.choice(vastaukset)
-        await interaction.response.send_message(f"🔮 **{kysymys}**\n{vastaus}")
+        answer = random.choice(answers)
+        await interaction.response.send_message(f"🔮 **{question}**\n{answer}")
 
-    @app_commands.command(name="kps", description="Kivi, paperi, sakset – vastaan botti")
-    @app_commands.describe(valinta="Valintasi")
-    @app_commands.choices(valinta=[
-        app_commands.Choice(name="Kivi 🪨", value="kivi"),
-        app_commands.Choice(name="Paperi 📄", value="paperi"),
-        app_commands.Choice(name="Sakset ✂️", value="sakset"),
+    @app_commands.command(name="rps", description="Rock, paper, scissors – vs bot")
+    @app_commands.describe(choice="Your choice")
+    @app_commands.choices(choice=[
+        app_commands.Choice(name="Rock 🪨", value="rock"),
+        app_commands.Choice(name="Paper 📄", value="paper"),
+        app_commands.Choice(name="Scissors ✂️", value="scissors"),
     ])
-    async def kps(self, interaction: discord.Interaction, valinta: app_commands.Choice[str]):
+    async def rps(self, interaction: discord.Interaction, choice: app_commands.Choice[str]):
         if not await self.bot.is_feature_enabled(interaction.guild_id, "kps"):
             await interaction.response.send_message(
-                "⚠️ Tämä minipeli on poistettu käytöstä. Ota se käyttöön web-dashboardista.", ephemeral=True
+                "⚠️ This minigame is disabled. Enable it in web dashboard.", ephemeral=True
             )
             return
-        bot_valinta = random.choice(("kivi", "paperi", "sakset"))
-        emoji = {"kivi": "🪨", "paperi": "📄", "sakset": "✂️"}
-        sinun, botti = valinta.value, bot_valinta
-        if sinun == botti:
-            tulos = "🤝 Tasapeli!"
-        elif (sinun == "kivi" and botti == "sakset") or (sinun == "paperi" and botti == "kivi") or (sinun == "sakset" and botti == "paperi"):
-            tulos = "🎉 Voitit!"
+        bot_choice = random.choice(("rock", "paper", "scissors"))
+        emoji = {"rock": "🪨", "paper": "📄", "scissors": "✂️"}
+        you, bot = choice.value, bot_choice
+        if you == bot:
+            tulos = "🤝 Tie!"
+        elif (you == "rock" and bot == "scissors") or (you == "paper" and bot == "rock") or (you == "scissors" and bot == "paper"):
+            tulos = "🎉 You won!"
         else:
-            tulos = "😅 Botti voitti!"
+            tulos = "😅 Bot won!"
         await interaction.response.send_message(
-            f"{emoji[sinun]} vs {emoji[botti]}\n{tulos}"
+            f"{emoji[you]} vs {emoji[bot]}\n{tulos}"
         )
 
-    @app_commands.command(name="arvaa_luku", description="Arvaa luku 1–10 – botti arpoo oikean vastauksen")
-    @app_commands.describe(luku="Arvauksesi (1–10)")
-    async def arvaa_luku(self, interaction: discord.Interaction, luku: int):
+    @app_commands.command(name="guess", description="Guess number 1–10 – bot picks the answer")
+    @app_commands.describe(number="Your guess (1–10)")
+    async def guess(self, interaction: discord.Interaction, number: int):
         if not await self.bot.is_feature_enabled(interaction.guild_id, "arvaa"):
             await interaction.response.send_message(
                 "⚠️ Tämä minipeli on poistettu käytöstä.", ephemeral=True
             )
             return
-        if luku < 1 or luku > 10:
-            await interaction.response.send_message("Luvun pitää olla 1–10.", ephemeral=True)
+        if number < 1 or number > 10:
+            await interaction.response.send_message("Number must be 1–10.", ephemeral=True)
             return
-        oikea = random.randint(1, 10)
-        if luku == oikea:
-            await interaction.response.send_message(f"🎉 Oikein! Ajattelin lukua **{oikea}**.")
+        correct = random.randint(1, 10)
+        if number == correct:
+            await interaction.response.send_message(f"🎉 Correct! I was thinking **{correct}**.")
         else:
-            await interaction.response.send_message(f"😅 Ei osunut. Ajattelin **{oikea}**, arvasit {luku}.")
+            await interaction.response.send_message(f"😅 Wrong. I was thinking **{correct}**, you guessed {number}.")
 
-    @app_commands.command(name="arpa", description="Arpa valitsee yhden annetuista vaihtoehdoista")
-    @app_commands.describe(vaihtoehdot="Pilkulla erotetut vaihtoehdot, esim. pizza,kebab,salaatti")
-    async def arpa(self, interaction: discord.Interaction, vaihtoehdot: str):
+    @app_commands.command(name="choose", description="Randomly pick one of the given options")
+    @app_commands.describe(options="Comma-separated options, e.g. pizza,kebab,salad")
+    async def choose(self, interaction: discord.Interaction, options: str):
         if not await self.bot.is_feature_enabled(interaction.guild_id, "arpa"):
             await interaction.response.send_message(
-                "⚠️ Tämä minipeli on poistettu käytöstä. Ota se käyttöön web-dashboardista.", ephemeral=True
+                "⚠️ This minigame is disabled. Enable it in web dashboard.", ephemeral=True
             )
             return
-        opts = [x.strip() for x in vaihtoehdot.split(",") if x.strip()]
+        opts = [x.strip() for x in options.split(",") if x.strip()]
         if len(opts) < 2:
             await interaction.response.send_message(
-                "Anna vähintään kaksi vaihtoehtoa pilkulla erotettuna, esim. `pizza, kebab, salaatti`.",
+                "Give at least two options separated by comma, e.g. `pizza, kebab, salad`.",
                 ephemeral=True
             )
             return
         if len(opts) > 20:
-            await interaction.response.send_message("Enintään 20 vaihtoehtoa.", ephemeral=True)
+            await interaction.response.send_message("Maximum 20 options.", ephemeral=True)
             return
         valittu = random.choice(opts)
-        await interaction.response.send_message(f"🎱 **Arpa:** {valittu}")
+        await interaction.response.send_message(f"🎱 **Choose:** {valittu}")
 
-    @app_commands.command(name="ruletti", description="Venäläinen ruletti – 1/6 mahdollisuus 'pum'")
+    @app_commands.command(name="roulette", description="Russian roulette – 1/6 chance bang")
     async def ruletti(self, interaction: discord.Interaction):
         if not await self.bot.is_feature_enabled(interaction.guild_id, "ruletti"):
             await interaction.response.send_message(
-                "⚠️ Tämä minipeli on poistettu käytöstä. Ota se käyttöön web-dashboardista.", ephemeral=True
+                "⚠️ This minigame is disabled. Enable it in web dashboard.", ephemeral=True
             )
             return
         if random.randint(1, 6) == 1:
-            await interaction.response.send_message("💥 **PUM!** 😵")
+            await interaction.response.send_message("💥 **BANG!** 😵")
         else:
-            await interaction.response.send_message("🔫 *klik* ... turvallinen kierros! 😮‍💨")
+            await interaction.response.send_message("🔫 *click* ... safe round! 😮‍💨")
 
 
 async def setup(bot):

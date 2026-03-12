@@ -1,5 +1,9 @@
 S44Gaming Non-Commercial Source License (SNCSL)
 
+================================================================================
+ENGLISH (English)
+================================================================================
+
 Copyright (c) 2026 S44Gaming. All rights reserved.
 
 1. Ownership
@@ -81,9 +85,9 @@ paid access, including but not limited to:
 * "donate to download" systems or donation-gated downloads
 
 You may not solicit, accept, or receive donations, tips, sponsorships,
-or any other form of financial contribution **in connection with the
+or any other form of financial contribution in connection with the
 distribution, access, modification, promotion, or availability of this
-Software or any derivative work**.
+Software or any derivative work.
 
 This prohibition applies regardless of whether the Software itself is
 sold individually or included as part of a broader paid offering.
@@ -121,3 +125,128 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
 ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+================================================================================
+SUOMI (Finnish)
+================================================================================
+
+Tekijänoikeudet (c) 2026 S44Gaming. Kaikki oikeudet pidätetään.
+
+1. Omistus
+
+Ohjelmisto sekä kaikki alkuperäinen lähdekoodi, resurssit ja dokumentaatio
+ovat S44Gamingin henkinen omaisuus. S44Gaming säilyttää täyden tekijänoikeuden
+ja omistusoikeuden ohjelmistoon kaiken aikaa.
+
+Ohjelmiston muokkaaminen EI siirrä omistusta eikä poista tai korvaa
+alkuperäistä tekijänoikeutta.
+
+2. Lupa ei-kaupalliseen käyttöön
+
+Tämän ohjelmiston ja siihen liittyvien dokumentointitiedostojen ("Ohjelmisto")
+kopion saanut henkilö saa ilmaiseksi käyttää, kopioida, muokata ja jakaa
+Ohjelmistoa VAIN EI-KAUPALLISIIN tarkoituksiin seuraavien ehtojen puitteissa.
+
+3. Lähdeviittauksen vaatimus
+
+Kaikki Ohjelmiston kopiot, mukaan lukien muokatut versiot tai johdannaisteokset,
+on mainittava selvästi:
+
+"Alkuperäinen ohjelmisto: S44Gaming"
+
+Tämän viittauksen on näkyvä vähintään yhdessä seuraavista:
+
+* repositorion README-tiedostossa
+* dokumentaatiossa
+* ohjelmiston tekijätiedoissa
+* lisenssitiedostossa
+
+Et saa väittää Ohjelmistoa tai sen johdannaista oman alkuperäistyösi.
+
+4. Muokattujen versioiden jakaminen
+
+Jos levität Ohjelmiston muokatun version, sinun ON:
+
+* Sisällytettävä tämä lisenssitiedosto muuttamattomana
+* Ilmoitettava selvästi, että versiosi on muokattu
+* Mainittava S44Gaming alkuperäisen tekijänä
+* Tarjottava näkyvä muutosloki muokkauksistasi
+
+Esimerkkilausunto:
+
+"Tämä projekti on S44Gamingin alkuperäisesti luoman ohjelmiston muokattu versio."
+
+5. Ei uudelleenbrändäystä
+
+Et saa poistaa viittauksia S44Gamingiin tai esittää Ohjelmistoa
+ikään kuin se olisi täysin oma luomuksesi.
+
+Projektin uudelleennimeäminen on sallittua VAIN, jos alkuperäisen
+tekijän maininta säilyy selvästi näkyvissä.
+
+6. Tiukka ei-kaupallinen rajoitus
+
+Ohjelmiston tai minkään muokatun version kaupallinen käyttö on kielletty
+ilman S44Gamingin nimenomaista kirjallista lupaa.
+
+Sinun on kielletty myydä, lisensoida, alilisensoida, monetisoida tai
+muuten tarjota tätä Ohjelmistoa tai sen johdannaista vastineeksi
+maksusta, suoraan tai epäsuorasti.
+
+On lisäksi kielletty laittamasta Ohjelmistoa minkään maksullisen
+pääsyn taakse, mukaan lukien mutta ei rajoittuen:
+
+* ohjelmiston myynti
+* pääsymaksujen veloitus
+* latausten monetisointi
+* maksullinen jakelu
+* maksulliset modit
+* lahjoitusten vaatiminen pääsyyn
+* maksumuurin taakse piilotetut versiot
+* kuukausi- tai jatkuvat tilaukset
+* jäsenyystasot tai tukijaojelmat
+* tukijoiden eksklusiivinen sisältö
+* varhainen pääsy maksun, tilauksen tai lahjoituksen vastineeksi
+* "lahjoita ladataksesi" -järjestelmät tai lahjoituspääsy
+
+Et saa pyytää, vastaanottaa tai ottaa vastaan lahjoituksia, juomarahoja,
+sponsorointeja tai muuta taloudellista vastiketta Ohjelmiston tai
+sen johdannaisen jakelun, pääsyn, muokkaamisen, mainostamisen tai
+saatavuuden yhteydessä.
+
+Tämä kielto koskee riippumatta siitä, myydäänkö Ohjelmistoa
+erikseen vai osana laajempaa maksullista tarjontaa.
+
+Rajoitus sisältää nimenomaan, mutta ei rajoitu, Ohjelmiston
+käytön seuraavilla palveluilla tai niiden kautta:
+
+* Patreon
+* Ko-fi
+* Buy Me a Coffee
+* digitaaliset markkinapaikat
+* tilauspalvelut
+* joukkorahoitusalustat
+* palvelut tai alustat, jotka tarjoavat pääsyn maksun, jäsenyyden,
+  jatkuvan taloudellisen tuen, juomarahat tai lahjoituspääsyn vastineeksi.
+
+Vaikka Ohjelmistoa on muokattu, kaupallinen käyttö EI ole sallittua
+ilman S44Gamingin nimenomaista kirjallista lupaa.
+
+7. Lisenssin säilyttäminen
+
+Tämä lisenssi ja tekijänoikeusilmoitus on säilytettävä kaikissa
+Ohjelmiston kopioissa tai merkittävissä osissa.
+
+Lisenssin poistaminen tai muuttaminen ei ole sallittua.
+
+8. Vastuuvapauslauseke
+
+OHJELMISTO TOIMITETAAN "SELLAISENA KUIN SE ON", ILMAN MINKÄÄNLAISIA
+TARKOITUKSEEN SOPIVUUDEN, KAUPAN MÄÄRÄISEKSI SOVELTUVUUDEN TAI
+EI-RIITAUTEEN TAKUITTA.
+
+TEKIJÄT EIVÄT OLE MILLÄÄN TAVALLA VASTUUSSA MILLÄÄNKÄN VAATEISTA,
+VÄHINGÖISTÄ TAI MUISTA SEURAUKSISTA, JOHTUPA SOVIMUKSESTA,
+VÄÄRYYSKÄYTTÄYTÖSTÄ TAI MUUSTA, OLI SYYLLÄ MICÄ HYVÄNSÄ, OSUSTAAN
+LÄHTIEN TAI OHJELMISTON KÄYTTÖÖN TAI TOIMITUKSEEN LIITTYEN.

@@ -7,17 +7,17 @@ class TervehdysCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="tervehdys", description="Tervehdi käyttäjää")
+    @app_commands.command(name="hello", description="Greet a user")
     async def tervehdys(self, interaction: discord.Interaction):
         enabled = await self.bot.is_feature_enabled(interaction.guild_id, "tervehdys")
         if not enabled:
             await interaction.response.send_message(
-                "⚠️ Tämä komento on poistettu käytöstä tällä palvelimella.",
+                "⚠️ This command is disabled on this server.",
                 ephemeral=True
             )
             return
         await interaction.response.send_message(
-            f"Hei {interaction.user.mention}! 👋"
+            f"Hello {interaction.user.mention}! 👋"
         )
 
 

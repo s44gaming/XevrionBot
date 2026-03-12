@@ -33,6 +33,8 @@ DEFAULT_MOD_FEATURES = {
     "unmute": True,
     "warn": True,
     "purge": True,
+    "slowmode": True,
+    "say": True,
 }
 
 DEFAULT_LOG_FEATURES = {
@@ -41,6 +43,7 @@ DEFAULT_LOG_FEATURES = {
     "member_leave": True,
     "message_delete": True,
     "message_edit": True,
+    "voice_state": True,
 }
 
 
@@ -413,16 +416,19 @@ def set_reminder_settings(guild_id: str, enabled: bool | None = None, max_per_us
 
 
 def get_starboard_settings(guild_id: str) -> dict:
-    """Starboard: channel_id, min_stars."""
+    """Starboard: enabled, channel_id, min_stars."""
     settings = get_guild_settings(guild_id)
     return {
+        "enabled": bool(settings.get("starboard_enabled", True)),
         "channel_id": settings.get("starboard_channel_id"),
         "min_stars": int(settings.get("starboard_min_stars", 3)),
     }
 
 
-def set_starboard_settings(guild_id: str, channel_id: str | None = None, min_stars: int | None = None) -> None:
+def set_starboard_settings(guild_id: str, enabled: bool | None = None, channel_id: str | None = None, min_stars: int | None = None) -> None:
     s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["starboard_enabled"] = bool(enabled)
     if channel_id is not None:
         if channel_id:
             s["starboard_channel_id"] = str(channel_id)
@@ -660,6 +666,24 @@ def get_db_stats() -> dict | None:
             return stats
     except Exception:
         return None
+
+
+def get_reaction_roles_settings(guild_id: str) -> dict:
+    """Reaction roles: enabled, roles (lista {message_id, channel_id, emoji, role_id})."""
+    settings = get_guild_settings(guild_id)
+    roles = settings.get("reaction_roles") or []
+    if not isinstance(roles, list):
+        roles = []
+    return {"enabled": bool(settings.get("reaction_roles_enabled", False)), "roles": roles}
+
+
+def set_reaction_roles_settings(guild_id: str, enabled: bool | None = None, roles: list | None = None) -> None:
+    s = get_guild_settings(guild_id)
+    if enabled is not None:
+        s["reaction_roles_enabled"] = bool(enabled)
+    if roles is not None:
+        s["reaction_roles"] = [r for r in roles if isinstance(r, dict) and r.get("message_id") and r.get("role_id")]
+    set_guild_settings(guild_id, s)
 
 
 def get_all_guild_settings_for_backup() -> dict:

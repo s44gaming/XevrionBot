@@ -99,6 +99,9 @@ class Bot(commands.Bot):
     def get_reminder_settings(self, guild_id: int) -> dict:
         return self._db.get_reminder_settings(str(guild_id))
 
+    def get_reaction_roles_settings(self, guild_id: int) -> dict:
+        return self._db.get_reaction_roles_settings(str(guild_id))
+
     def _presence_text(self) -> str:
         """Status-teksti: palvelimien määrä, kuvaus, kehittäjät, kutsu (max 128 merkkiä)."""
         n = len(self.guilds)

@@ -106,10 +106,38 @@ async def setup(bot):
             color=discord.Color.blurple(),
         )
 
+    async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if not member.guild:
+            return
+        if not bot.is_log_enabled(member.guild.id, "voice_state"):
+            return
+        ch_name = None
+        action = ""
+        if before.channel != after.channel:
+            if not before.channel and after.channel:
+                action = "Liittyi"
+                ch_name = after.channel.name if after.channel else "—"
+            elif before.channel and not after.channel:
+                action = "Poistui"
+                ch_name = before.channel.name if before.channel else "—"
+            else:
+                action = "Vaihtoi"
+                ch_name = f"{before.channel.name if before.channel else '—'} → {after.channel.name if after.channel else '—'}"
+        if action:
+            await send_guild_log(
+                bot,
+                member.guild,
+                "voice_state",
+                f"Ääni: {action}",
+                f"**Jäsen:** {member} (`{member.id}`)\n**Kanava:** {ch_name}",
+                color=discord.Color.blue(),
+            )
+
     bot.add_listener(on_member_join, "on_member_join")
     bot.add_listener(on_member_remove, "on_member_remove")
     bot.add_listener(on_message_delete, "on_message_delete")
     bot.add_listener(on_message_edit, "on_message_edit")
+    bot.add_listener(on_voice_state_update, "on_voice_state_update")
 
 # Tekijänoikeudet S44Gaming kaikki oikeudet pidätetään. https://discord.gg/ujB4JHfgcg
 

@@ -45,6 +45,8 @@ async def setup(bot):
         if str(payload.emoji) != "⭐" or not payload.guild_id:
             return
         settings = bot.get_starboard_settings(payload.guild_id)
+        if not settings.get("enabled", True):
+            return
         ch_id = settings.get("channel_id")
         min_stars = settings.get("min_stars", 3)
         if not ch_id:
@@ -94,6 +96,8 @@ async def setup(bot):
         if str(payload.emoji) != "⭐" or not payload.guild_id:
             return
         settings = bot.get_starboard_settings(payload.guild_id)
+        if not settings.get("enabled", True):
+            return
         ch_id = settings.get("channel_id")
         if not ch_id:
             return

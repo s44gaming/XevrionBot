@@ -9,44 +9,44 @@ class ArvontaCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="arvonta", description="Arvo voittajat viestistä (vaatii mod-oikeudet)")
+    @app_commands.command(name="giveaway", description="Pick winners from message (requires mod)")
     @app_commands.describe(
-        määrä="Montako voittajaa arvotaan (1–20)",
-        viestin_id="Viestin ID josta arvotaan (reagoijat mukaan)"
+        count="How many winners to pick (1–20)",
+        message_id="Message ID to pick from (reactors)"
     )
-    async def arvonta(
+    async def giveaway(
         self,
         interaction: discord.Interaction,
-        määrä: app_commands.Range[int, 1, 20],
-        viestin_id: str,
+        count: app_commands.Range[int, 1, 20],
+        message_id: str,
     ):
         if not interaction.guild:
-            await interaction.response.send_message("Tätä ei voi käyttää DM:ssä.", ephemeral=True)
+            await interaction.response.send_message("Cannot use in DMs.", ephemeral=True)
             return
         if not await self.bot.is_feature_enabled(interaction.guild_id, "arvonta"):
             await interaction.response.send_message(
-                "⚠️ Arvonta on poistettu käytöstä.",
+                "⚠️ Giveaway is disabled.",
                 ephemeral=True,
             )
             return
         if not self.bot.has_mod_permission(interaction.user):
             await interaction.response.send_message(
-                "❌ Sinulla ei ole oikeuksia käyttää tätä komentoa.",
+                "❌ You don't have permission to use this command.",
                 ephemeral=True,
             )
             return
         settings = self.bot.get_giveaway_settings(interaction.guild_id)
         if not settings.get("enabled", True):
             await interaction.response.send_message(
-                "⚠️ Arvonta on poistettu käytöstä tällä palvelimella.",
+                "⚠️ Giveaway is disabled on this server.",
                 ephemeral=True,
             )
             return
         try:
-            msg_id = int(viestin_id.strip())
+            msg_id = int(message_id.strip())
         except ValueError:
             await interaction.response.send_message(
-                "❌ Virheellinen viestin ID.",
+                "❌ Invalid message ID.",
                 ephemeral=True,
             )
             return
@@ -54,7 +54,7 @@ class ArvontaCog(commands.Cog):
             message = await interaction.channel.fetch_message(msg_id)
         except discord.NotFound:
             await interaction.response.send_message(
-                "❌ Viestiä ei löydy tältä kanavalta.",
+                "❌ Message not found in this channel.",
                 ephemeral=True,
             )
             return
@@ -64,17 +64,17 @@ class ArvontaCog(commands.Cog):
                 if not user.bot and isinstance(user, discord.Member):
                     users.add(user)
         users = list(users)
-        if len(users) < määrä:
+        if len(users) < count:
             await interaction.response.send_message(
-                f"❌ Vain {len(users)} reagoijaa. Tarvitaan vähintään {määrä}.",
+                f"❌ Only {len(users)} reactors. Need at least {count}.",
                 ephemeral=True,
             )
             return
-        winners = random.sample(users, määrä)
+        winners = random.sample(users, count)
         names = ", ".join(w.mention for w in winners)
         embed = discord.Embed(
-            title="🎉 Arvonta valmis!",
-            description=f"**{määrä}** voittajaa viestistä: {message.jump_url}\n\n**Voittajat:** {names}",
+            title="🎉 Giveaway complete!",
+            description=f"**{count}** winners from: {message.jump_url}\n\n**Winners:** {names}",
             color=discord.Color.gold(),
         )
         await interaction.response.send_message(embed=embed)

@@ -10,34 +10,40 @@ from discord.ext import commands
 COMMAND_TO_FEATURE = {
     "ping": "ping",
     "info": "info",
-    "hallinta": "hallinta",
-    "lähetäkutsu": "kutsuviesti",
-    "taso": "taso",
-    "kolikko": "kolikko",
+    "avatar": "avatar",
+    "userinfo": "userinfo",
+    "reverse": "reverse",
+    "admin": "hallinta",
+    "sendinvite": "kutsuviesti",
+    "level": "taso",
+    "coinflip": "kolikko",
     "8ball": "8ball",
-    "arvaa_luku": "arvaa",
-    "ruletti": "ruletti",
+    "guess": "arvaa",
+    "roulette": "ruletti",
     "afk": "afk",
-    "muistutus": "muistutus",
-    "komennot": "komennot_lista",
-    "tervehdys": "tervehdys",
-    "kutsu": "kutsu",
-    "tiketti_paneeli": "tiketti",
-    "tasonboard": "tasonboard",
-    "noppa": "noppa",
-    "kps": "kps",
-    "arpa": "arpa",
+    "reminder": "muistutus",
+    "commands": "komennot_lista",
+    "hello": "tervehdys",
+    "invite": "kutsu",
+    "ticket_panel": "tiketti",
+    "leaderboard": "tasonboard",
+    "dice": "noppa",
+    "rps": "kps",
+    "choose": "arpa",
     "fivem": "fivem",
-    "ehdotus": "ehdotus",
-    "arvonta": "arvonta",
+    "suggestion": "ehdotus",
+    "giveaway": "arvonta",
     "kick": "mod_kick",
     "ban": "mod_ban",
     "mute": "mod_mute",
     "unmute": "mod_unmute",
-    "varoitus": "mod_warn",
-    "varoitukset": "mod_warn",
-    "poista_varoitukset": "mod_warn",
+    "warn": "mod_warn",
+    "warnings": "mod_warn",
+    "clearwarns": "mod_warn",
     "clear": "mod_purge",
+    "slowmode": "mod_slowmode",
+    "say": "mod_say",
+    "poll": "poll",
 }
 
 
@@ -58,18 +64,18 @@ class KomennotListaCog(commands.Cog):
             rivit.append((nimi, kuvaus[:80] if kuvaus else "–"))
         return sorted(rivit, key=lambda x: x[0].lower())
 
-    @app_commands.command(name="komennot", description="Näytä kaikki Xevrionin komennot")
+    @app_commands.command(name="commands", description="Show all bot commands")
     async def komennot(self, interaction: discord.Interaction):
         enabled = await self.bot.is_feature_enabled(interaction.guild_id, "komennot_lista")
         if not enabled:
             await interaction.response.send_message(
-                "⚠️ Tämä komento on poistettu käytöstä tällä palvelimella. Ota se käyttöön web-dashboardista.",
+                "⚠️ This command is disabled. Enable it in web dashboard.",
                 ephemeral=True
             )
             return
         lista = self._kerää_kaikki_komennot()
         if not lista:
-            await interaction.response.send_message("Komentoja ei löytynyt.", ephemeral=True)
+            await interaction.response.send_message("No commands found.", ephemeral=True)
             return
 
         settings = self.bot._db.get_guild_settings(str(interaction.guild_id)) if interaction.guild_id else {}
@@ -78,23 +84,23 @@ class KomennotListaCog(commands.Cog):
             if feat is None:
                 return "–"
             val = settings.get(feat, True)
-            return "🟢 Päällä" if val else "🔴 Pois"
+            return "🟢 On" if val else "🔴 Off"
 
         # Jaetaan useampaan fieldiin (max 1024 merkkiä per field) jotta mobiililla ja PC:llä kaikki näkyy
         CHUNK_LEN = 10
         chunks = [lista[i : i + CHUNK_LEN] for i in range(0, len(lista), CHUNK_LEN)]
         total = len(chunks)
         embed = discord.Embed(
-            title="Xevrionin komennot",
-            description="Kaikki slash-komennot. 🟢 Päällä / 🔴 Pois = web-dashboard → Yleinen → Komennot.",
+            title="Bot commands",
+            description="All slash commands. 🟢 On / 🔴 Off = web dashboard → General → Commands.",
             color=discord.Color.blue()
         )
         for idx, chunk in enumerate(chunks, 1):
             lines = [f"**/{nimi}** — {_on_off(nimi)} — {kuvaus}" for nimi, kuvaus in chunk]
             text = "\n".join(lines)
-            name = f"Komennot ({idx}/{total})" if total > 1 else "Komennot"
+            name = f"Commands ({idx}/{total})" if total > 1 else "Commands"
             embed.add_field(name=name, value=text or "–", inline=False)
-        embed.set_footer(text="Päällä/Pois: web-dashboard → Yleinen → Komennot")
+        embed.set_footer(text="On/Off: web dashboard → General → Commands")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 

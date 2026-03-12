@@ -8,17 +8,17 @@ class HallintaCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="hallinta", description="Linkki web-hallintapaneeliin")
+    @app_commands.command(name="admin", description="Link to web dashboard")
     async def hallinta(self, interaction: discord.Interaction):
         enabled = await self.bot.is_feature_enabled(interaction.guild_id, "hallinta")
         if not enabled:
             await interaction.response.send_message(
-                "⚠️ Tämä komento on poistettu käytöstä.",
+                "⚠️ This command is disabled on this server.",
                 ephemeral=True
             )
             return
         await interaction.response.send_message(
-            f"🌐 Hallinnoi bottia: {BASE_URL}",
+            f"🌐 Manage bot: {BASE_URL}",
             ephemeral=True
         )
 

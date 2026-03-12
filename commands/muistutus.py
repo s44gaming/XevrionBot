@@ -14,16 +14,16 @@ def _parse_duration(s: str) -> int | None:
     if not s:
         return None
     total = 0
-    for m in re.finditer(r"(\d+)\s*(s|m|h|d|min|sec|minuutti|tunti|päivä)", s):
+    for m in re.finditer(r"(\d+)\s*(s|m|h|d|min|sec|minute|hour|day|minuutti|tunti|päivä)", s):
         n = int(m.group(1))
         u = m.group(2)
         if u in ("s", "sec"):
             total += n
-        elif u in ("m", "min", "minuutti"):
+        elif u in ("m", "min", "minute", "minuutti"):
             total += n * 60
-        elif u in ("h", "tunti"):
+        elif u in ("h", "hour", "tunti"):
             total += n * 3600
-        elif u in ("d", "päivä"):
+        elif u in ("d", "day", "päivä"):
             total += n * 86400
     return total if total > 0 else None
 
@@ -33,43 +33,43 @@ class MuistutusCog(commands.Cog):
         self.bot = bot
         self._last_reminder: dict[tuple[int, int], float] = {}
 
-    @app_commands.command(name="muistutus", description="Aseta muistutus")
+    @app_commands.command(name="reminder", description="Set a reminder")
     @app_commands.describe(
-        aika="Aika, esim. 5m, 1h, 30s, 1h30m",
-        viesti="Mitä muistuttaa (valinnainen)"
+        duration="Duration, e.g. 5m, 1h, 30s, 1h30m",
+        message="What to remind (optional)"
     )
-    async def muistutus(
+    async def reminder(
         self,
         interaction: discord.Interaction,
-        aika: str,
-        viesti: str = "Muistutus!",
+        duration: str,
+        message: str = "Reminder!",
     ):
         if not interaction.guild:
-            await interaction.response.send_message("Tätä ei voi käyttää DM:ssä.", ephemeral=True)
+            await interaction.response.send_message("Cannot use in DMs.", ephemeral=True)
             return
         if not await self.bot.is_feature_enabled(interaction.guild_id, "muistutus"):
             await interaction.response.send_message(
-                "⚠️ Muistutus on poistettu käytöstä.",
+                "⚠️ Reminder is disabled.",
                 ephemeral=True,
             )
             return
         settings = self.bot.get_reminder_settings(interaction.guild_id)
         if not settings.get("enabled", True):
             await interaction.response.send_message(
-                "⚠️ Muistutus on poistettu käytöstä tällä palvelimella.",
+                "⚠️ Reminder is disabled on this server.",
                 ephemeral=True,
             )
             return
-        sec = _parse_duration(aika)
+        sec = _parse_duration(duration)
         if not sec or sec < 10:
             await interaction.response.send_message(
-                "❌ Käytä muotoa esim. 5m, 1h, 30s. Minimi 10 sekuntia.",
+                "❌ Use format e.g. 5m, 1h, 30s. Minimum 10 seconds.",
                 ephemeral=True,
             )
             return
         if sec > 86400 * 7:  # max 7 päivää
             await interaction.response.send_message(
-                "❌ Enintään 7 päivää.",
+                "❌ Maximum 7 days.",
                 ephemeral=True,
             )
             return
@@ -77,7 +77,7 @@ class MuistutusCog(commands.Cog):
         count = database.count_user_reminders(str(interaction.guild_id), str(interaction.user.id))
         if count >= max_per:
             await interaction.response.send_message(
-                f"❌ Sinulla on jo {count} aktiivista muistutusta (max {max_per}).",
+                f"❌ You already have {count} active reminders (max {max_per}).",
                 ephemeral=True,
             )
             return
@@ -86,7 +86,7 @@ class MuistutusCog(commands.Cog):
         now = time.time()
         if (now - self._last_reminder.get(key, 0)) < cooldown:
             await interaction.response.send_message(
-                f"❌ Odota {cooldown} sekuntia ennen seuraavaa muistutusta.",
+                f"❌ Wait {cooldown} seconds before next reminder.",
                 ephemeral=True,
             )
             return
@@ -96,14 +96,14 @@ class MuistutusCog(commands.Cog):
             str(interaction.guild_id),
             str(interaction.user.id),
             str(interaction.channel_id),
-            (viesti or "Muistutus!")[:500],
+            (message or "Reminder!")[:500],
             fire_at,
         )
         mins = sec // 60
         secs = sec % 60
         time_str = f"{mins} min" if mins else f"{secs} s"
         await interaction.response.send_message(
-            f"✅ Muistutus asetettu! Muistan sinulle {time_str} kuluttua: **{(viesti or 'Muistutus!')[:100]}**",
+            f"✅ Reminder set! I'll remind you in {time_str}: **{(message or 'Reminder!')[:100]}**",
             ephemeral=True,
         )
 

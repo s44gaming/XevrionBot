@@ -7,12 +7,12 @@ class PingCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="ping", description="Tarkista botin vastausaika")
+    @app_commands.command(name="ping", description="Check bot response time")
     async def ping(self, interaction: discord.Interaction):
         enabled = await self.bot.is_feature_enabled(interaction.guild_id, "ping")
         if not enabled:
             await interaction.response.send_message(
-                "⚠️ Tämä komento on poistettu käytöstä tällä palvelimella. Ota se käyttöön web-dashboardista.",
+                "⚠️ This command is disabled. Enable in web dashboard.",
                 ephemeral=True
             )
             return
