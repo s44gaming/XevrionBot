@@ -1054,6 +1054,7 @@
         }
     </script>
     <footer class="site-footer">© <span id="year"></span> <span data-i18n="dash.footer">S44Gaming. Kaikki oikeudet pidätetään.</span></footer>
+    <script src="{{ url_for('static', filename='js/idle-logout.js') }}"></script>
     <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
     <script>if (localStorage.getItem('xevrion-theme') === 'light') document.body.classList.add('light-theme');</script>
 </body>
