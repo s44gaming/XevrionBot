@@ -121,6 +121,19 @@ def dev_portal_required(f):
     return decorated
 
 
+def _load_announcements():
+    """Lataa ilmoitukset announcements.json -tiedostosta. JSON-muoto: [{"date":"...","title":"...","text":"..."}]"""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "announcements.json")
+    try:
+        if os.path.isfile(path):
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
+    except (json.JSONDecodeError, OSError):
+        pass
+    return []
+
+
 def get_user_guilds():
     token = session.get("access_token")
     if not token:
@@ -354,7 +367,9 @@ def dashboard():
             g["invite_url"] = get_bot_invite_url(gid) if not bot_in else None
     user_id = str(session.get("user", {}).get("id", ""))
     is_dev = bool(DEV_USER_IDS and user_id in DEV_USER_IDS)
-    return render_template("dashboard.html", guilds=guilds, user=session["user"], is_dev=is_dev)
+    # Uudet ominaisuudet – lisää ilmoituksia tiedostoon announcements.json
+    announcements = _load_announcements()
+    return render_template("dashboard.html", guilds=guilds, user=session["user"], is_dev=is_dev, announcements=announcements)
 
 
 # ---------- Kehittäjäportaali ----------

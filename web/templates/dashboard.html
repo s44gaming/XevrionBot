@@ -24,6 +24,28 @@
         </nav>
     </header>
     <main class="main">
+        {% if announcements %}
+        <section class="section announcements-section">
+            <h2 class="announcements-title" data-i18n="dash.latest_update">Viimeisin päivitys</h2>
+            <div class="announcements-content">
+                {% for a in announcements %}
+                <div class="announcement-item">
+                    {% if a.date %}<span class="announcement-date">{{ a.date }}</span>{% endif %}
+                    {% if a.title_key %}
+                    <strong data-i18n="{{ a.title_key }}">{{ a.title|default('') }}</strong>
+                    {% else %}
+                    <strong>{{ a.title }}</strong>
+                    {% endif %}
+                    {% if a.text_key %}
+                    <p class="muted" style="margin:0.25rem 0 0;" data-i18n="{{ a.text_key }}">{{ a.text|default('') }}</p>
+                    {% else %}
+                    <p class="muted" style="margin:0.25rem 0 0;">{{ a.text|safe }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
         <section class="section">
             <h1 data-i18n="dash.select_server">Valitse palvelin</h1>
             {% if error %}
