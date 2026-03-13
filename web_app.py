@@ -14,12 +14,15 @@ from config import DEV_USER_IDS, BOT_INFO_EDIT_PASSWORD
 _REQ_TIMEOUT = 30
 _REQ_HEADERS = {"User-Agent": "DiscordBot (Web Dashboard)"}
 _CACHE_TTL = 90  # sekuntia Discord API -vastauksille
+_CACHE_MAX_SIZE = 300  # max välimuistissa olevia avaimia (channels, roles)
 _discord_cache = {}
+_cache_keys_order = []  # FIFO eviction
 _cache_lock = threading.Lock()
 
 app = Flask(__name__, template_folder="web/templates", static_folder="web/static")
 app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(32))
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400
+app.config["JSON_SORT_KEYS"] = False  # Nopeampi JSON-serialisointi
 
 
 @app.errorhandler(Exception)
@@ -148,12 +151,15 @@ def bot_in_guild(guild_id: str) -> bool:
         pass
     if not BOT_TOKEN:
         return False
-    r = requests.get(
-        f"{DISCORD_API}/guilds/{guild_id}",
-        headers={"Authorization": f"Bot {BOT_TOKEN}", **_REQ_HEADERS},
-        timeout=_REQ_TIMEOUT
-    )
-    return r.status_code == 200
+    try:
+        r = requests.get(
+            f"{DISCORD_API}/guilds/{guild_id}",
+            headers={"Authorization": f"Bot {BOT_TOKEN}", **_REQ_HEADERS},
+            timeout=_REQ_TIMEOUT
+        )
+        return r.status_code == 200
+    except requests.RequestException:
+        return False
 
 
 def get_bot_invite_url(guild_id: str) -> str:
@@ -166,7 +172,7 @@ def get_bot_invite_url(guild_id: str) -> str:
 
 
 def _get_cached(key: str, fetcher):
-    """Palauttaa välimuistista tai hakee ja tallentaa."""
+    """Palauttaa välimuistista tai hakee ja tallentaa. Erottaa vanhat jos yli max."""
     now = time.monotonic()
     with _cache_lock:
         entry = _discord_cache.get(key)
@@ -175,6 +181,12 @@ def _get_cached(key: str, fetcher):
     data = fetcher()
     with _cache_lock:
         _discord_cache[key] = {"data": data, "ts": now}
+        if key in _cache_keys_order:
+            _cache_keys_order.remove(key)
+        _cache_keys_order.append(key)
+        while len(_discord_cache) > _CACHE_MAX_SIZE and _cache_keys_order:
+            old_key = _cache_keys_order.pop(0)
+            _discord_cache.pop(old_key, None)
     return data
 
 
@@ -182,14 +194,17 @@ def _fetch_guild_channels_raw(guild_id: str) -> list:
     """Yksi API-kutsu kaikille kanaville."""
     if not BOT_TOKEN:
         return []
-    r = requests.get(
-        f"{DISCORD_API}/guilds/{guild_id}/channels",
-        headers={"Authorization": f"Bot {BOT_TOKEN}", **_REQ_HEADERS},
-        timeout=_REQ_TIMEOUT
-    )
-    if r.status_code != 200:
+    try:
+        r = requests.get(
+            f"{DISCORD_API}/guilds/{guild_id}/channels",
+            headers={"Authorization": f"Bot {BOT_TOKEN}", **_REQ_HEADERS},
+            timeout=_REQ_TIMEOUT
+        )
+        if r.status_code != 200:
+            return []
+        return r.json()
+    except requests.RequestException:
         return []
-    return r.json()
 
 
 def get_guild_channels(guild_id: str) -> list:
@@ -215,15 +230,18 @@ def get_guild_categories(guild_id: str) -> list:
 def _fetch_guild_roles_raw(guild_id: str) -> list:
     if not BOT_TOKEN:
         return []
-    r = requests.get(
-        f"{DISCORD_API}/guilds/{guild_id}",
-        headers={"Authorization": f"Bot {BOT_TOKEN}", **_REQ_HEADERS},
-        timeout=_REQ_TIMEOUT
-    )
-    if r.status_code != 200:
+    try:
+        r = requests.get(
+            f"{DISCORD_API}/guilds/{guild_id}",
+            headers={"Authorization": f"Bot {BOT_TOKEN}", **_REQ_HEADERS},
+            timeout=_REQ_TIMEOUT
+        )
+        if r.status_code != 200:
+            return []
+        roles = r.json().get("roles", [])
+        return [ro for ro in roles if not ro.get("managed")]
+    except requests.RequestException:
         return []
-    roles = r.json().get("roles", [])
-    return [ro for ro in roles if not ro.get("managed")]
 
 
 def get_guild_roles(guild_id: str) -> list:
@@ -327,7 +345,7 @@ def dashboard():
         except requests.RequestException:
             return g["id"], False, None
 
-    with ThreadPoolExecutor(max_workers=min(10, len(guilds) or 1)) as ex:
+    with ThreadPoolExecutor(max_workers=min(5, max(1, len(guilds)))) as ex:
         futures = {ex.submit(_check_guild, g): g for g in guilds}
         for future in as_completed(futures):
             gid, bot_in, _ = future.result()

@@ -18,6 +18,7 @@ def _get_conn():
         conn.execute("PRAGMA synchronous=NORMAL")
         conn.execute("PRAGMA cache_size=-64000")
         conn.execute("PRAGMA temp_store=MEMORY")
+        conn.execute("PRAGMA busy_timeout=10000")  # 10s odotus lukitukselle
         yield conn
         conn.commit()
     except Exception:

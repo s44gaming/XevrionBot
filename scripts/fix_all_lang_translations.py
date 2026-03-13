@@ -422,6 +422,24 @@ for lang, t in EXTRA.items():
         TRANS[lang][DESC1] = DESC1
 if 'ml' in TRANS:
     TRANS['ml']['Member messages'] = 'അംഗ സന്ദേശങ്ങൾ'
+# Footer (S44Gaming. All rights reserved.) – prevent wrong "Save" etc.
+FOOTER = 'S44Gaming. All rights reserved.'
+for lang, text in [
+    ('ta', 'S44Gaming. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டுள்ளன.'),
+    ('te', 'S44Gaming. అన్ని హక్కులు రిజర్వు చేయబడ్డాయి.'),
+    ('ml', 'S44Gaming. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തമാണ്.'),
+    ('ur', 'S44Gaming. جملہ حقوق محفوظ ہیں۔'),
+    ('az', 'S44Gaming. Bütün hüquqlar qorunur.'),
+    ('hy', 'S44Gaming. Բոլոր իրավունքները պաշտպանված են:'),
+    ('ka', 'S44Gaming. ყველა უფლება დაცულია.'),
+    ('si', 'S44Gaming. සියලු අයිතිවාසිකම් ඇවිරිණි.'),
+    ('ne', 'S44Gaming. सर्व अधिकार सुरक्षित।'),
+    ('my', 'S44Gaming. မူပိုင်ခွင့်အားလုံး လိုက်နာပါမည်။'),
+    ('km', 'S44Gaming. រក្សាសិទ្ធិគ្រប់យ៉ាង។'),
+]:
+    if lang in TRANS:
+        TRANS[lang][FOOTER] = text
+
 def repl(m):
     lang, val = m.group(1), m.group(2)
     if lang not in TRANS:
